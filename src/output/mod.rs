@@ -17,6 +17,8 @@ pub enum CommandOutput {
     Detail { fields: Vec<(String, String)> },
     /// Raw message (e.g. "Monitor deleted.").
     Message(String),
+    /// Pre-formatted output (passed through all renderers as-is).
+    Raw(String),
     /// No output (e.g. help was already printed).
     Empty,
 }

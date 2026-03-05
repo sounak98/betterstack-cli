@@ -1,3 +1,4 @@
+pub mod connections;
 pub mod incidents;
 pub mod pagination;
 pub mod retry;

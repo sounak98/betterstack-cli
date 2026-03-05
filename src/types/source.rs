@@ -12,6 +12,7 @@ pub struct SourceResource {
 #[derive(Debug, Clone, Deserialize)]
 #[allow(dead_code)]
 pub struct SourceAttributes {
+    pub team_id: Option<u64>,
     pub name: Option<String>,
     pub platform: Option<String>,
     pub table_name: Option<String>,

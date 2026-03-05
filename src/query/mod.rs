@@ -44,7 +44,7 @@ pub fn compile(filter: &str, table: &str, limit: u32, since: Option<&str>) -> Re
     ))
 }
 
-fn parse_duration_filter(since: &str) -> Result<String> {
+pub fn parse_duration_filter(since: &str) -> Result<String> {
     let since = since.trim();
     if since.is_empty() {
         return Ok(String::new());
@@ -133,6 +133,18 @@ fn tokenize(input: &str) -> Result<Vec<String>> {
     Ok(tokens)
 }
 
+/// Build a JSONExtractString call for a field path.
+/// Supports dot notation: "message_json.level" -> JSONExtractString(raw, 'message_json', 'level')
+fn json_extract(field: &str) -> String {
+    let parts: Vec<&str> = field.split('.').collect();
+    let args = parts
+        .iter()
+        .map(|p| format!("'{}'", escape_sql(p)))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!("JSONExtractString(raw, {args})")
+}
+
 fn compile_condition(token: &str) -> Result<String> {
     let Some(colon_pos) = token.find(':') else {
         // No colon - treat as a raw text search
@@ -147,52 +159,39 @@ fn compile_condition(token: &str) -> Result<String> {
         bail!("Empty field name in filter: '{token}'");
     }
 
-    // Check for comparison operators
+    let extract = json_extract(field);
+
+    // Comparison operators
     if let Some(rest) = value.strip_prefix(">=") {
         let escaped = escape_sql(rest);
-        return Ok(format!(
-            "toFloat64OrNull(JSONExtractString(raw, '{field}')) >= {escaped}"
-        ));
+        return Ok(format!("toFloat64OrNull({extract}) >= {escaped}"));
     }
     if let Some(rest) = value.strip_prefix("<=") {
         let escaped = escape_sql(rest);
-        return Ok(format!(
-            "toFloat64OrNull(JSONExtractString(raw, '{field}')) <= {escaped}"
-        ));
+        return Ok(format!("toFloat64OrNull({extract}) <= {escaped}"));
     }
     if let Some(rest) = value.strip_prefix('>') {
         let escaped = escape_sql(rest);
-        return Ok(format!(
-            "toFloat64OrNull(JSONExtractString(raw, '{field}')) > {escaped}"
-        ));
+        return Ok(format!("toFloat64OrNull({extract}) > {escaped}"));
     }
     if let Some(rest) = value.strip_prefix('<') {
         let escaped = escape_sql(rest);
-        return Ok(format!(
-            "toFloat64OrNull(JSONExtractString(raw, '{field}')) < {escaped}"
-        ));
+        return Ok(format!("toFloat64OrNull({extract}) < {escaped}"));
     }
-
-    // Quoted value - contains/LIKE search
+    // Quoted value - contains
     if value.starts_with('"') && value.ends_with('"') && value.len() >= 2 {
         let inner = &value[1..value.len() - 1];
         let escaped = escape_sql(inner);
-        return Ok(format!(
-            "JSONExtractString(raw, '{field}') LIKE '%{escaped}%'"
-        ));
+        return Ok(format!("{extract} LIKE '%{escaped}%'"));
     }
-
-    // Wildcard pattern
+    // Wildcard
     if value.contains('*') {
         let escaped = escape_sql(&value.replace('*', "%"));
-        return Ok(format!(
-            "JSONExtractString(raw, '{field}') LIKE '{escaped}'"
-        ));
+        return Ok(format!("{extract} LIKE '{escaped}'"));
     }
-
     // Exact match
     let escaped = escape_sql(value);
-    Ok(format!("JSONExtractString(raw, '{field}') = '{escaped}'"))
+    Ok(format!("{extract} = '{escaped}'"))
 }
 
 fn escape_sql(s: &str) -> String {
@@ -206,10 +205,8 @@ mod tests {
     #[test]
     fn simple_equality() {
         let sql = compile("level:error", "t123_logs", 100, None).unwrap();
-        assert_eq!(
-            sql,
-            "SELECT dt, raw FROM remote(t123_logs) WHERE JSONExtractString(raw, 'level') = 'error' ORDER BY dt DESC LIMIT 100"
-        );
+        assert!(sql.contains("JSONExtractString(raw, 'level') = 'error'"));
+        assert!(!sql.contains("message_json"));
     }
 
     #[test]

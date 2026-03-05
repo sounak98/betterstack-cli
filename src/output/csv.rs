@@ -25,6 +25,7 @@ pub fn render(output: &CommandOutput) -> String {
             format!("{}\n{}", headers.join(","), values.join(","))
         }
         CommandOutput::Message(msg) => msg.clone(),
+        CommandOutput::Raw(s) => s.clone(),
         CommandOutput::Empty => String::new(),
     }
 }

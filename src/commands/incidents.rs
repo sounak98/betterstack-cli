@@ -28,11 +28,13 @@ enum IncidentsSubCmd {
         to: Option<String>,
     },
     /// Get details of a specific incident.
+    #[command(arg_required_else_help = true)]
     Get {
         /// Incident ID.
         id: String,
     },
     /// Create a new incident.
+    #[command(arg_required_else_help = true)]
     Create {
         /// Incident name.
         #[arg(long)]
@@ -57,26 +59,31 @@ enum IncidentsSubCmd {
         push: bool,
     },
     /// Acknowledge an incident.
+    #[command(arg_required_else_help = true)]
     Ack {
         /// Incident ID.
         id: String,
     },
     /// Resolve an incident.
+    #[command(arg_required_else_help = true)]
     Resolve {
         /// Incident ID.
         id: String,
     },
     /// Escalate an incident.
+    #[command(arg_required_else_help = true)]
     Escalate {
         /// Incident ID.
         id: String,
     },
     /// Delete an incident.
+    #[command(arg_required_else_help = true)]
     Delete {
         /// Incident ID.
         id: String,
     },
     /// Show the timeline for an incident.
+    #[command(arg_required_else_help = true)]
     Timeline {
         /// Incident ID.
         id: String,
