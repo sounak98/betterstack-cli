@@ -27,5 +27,7 @@ jobs:
         run: cargo test
       - name: Build
         run: cargo build
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@cargo-audit
       - name: Security Audit
-        run: cargo install cargo-audit --locked && cargo audit
+        run: cargo audit
