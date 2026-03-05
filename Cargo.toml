@@ -17,11 +17,11 @@ libc = "0.2"
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tempfile = "3"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 toml = "0.8"
 
 [dev-dependencies]
-tempfile = "3"
 wiremock = "0.6"
 
 [profile.release]

@@ -40,6 +40,8 @@ enum Command {
     Auth(AuthCmd),
     /// Manage uptime monitors.
     Monitors(MonitorsCmd),
+    /// Update bs to the latest version.
+    Upgrade,
 }
 
 fn resolve_token(cli_token: Option<&str>, config_store: &FileConfigStore) -> Option<String> {
@@ -70,8 +72,8 @@ async fn main() -> Result<()> {
 
     let token = resolve_token(cli.token.as_deref(), &config_store);
 
-    // Auth commands don't require a token
-    let needs_token = !matches!(command, Command::Auth(_));
+    // Auth and upgrade commands don't require a token
+    let needs_token = !matches!(command, Command::Auth(_) | Command::Upgrade);
 
     let uptime = if needs_token {
         let token = token.ok_or_else(|| {
@@ -98,6 +100,7 @@ async fn main() -> Result<()> {
     let result = match command {
         Command::Auth(cmd) => cmd.run(&ctx).await,
         Command::Monitors(cmd) => cmd.run(&ctx).await,
+        Command::Upgrade => bs_cli::commands::upgrade::run().await,
     };
 
     match result {
