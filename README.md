@@ -56,9 +56,17 @@ bs upgrade
 bs auth init
 ```
 
-Get your API tokens at [betterstack.com/settings/api-tokens](https://betterstack.com/settings/api-tokens/0). Token input is hidden for security.
+Get your API tokens at [betterstack.com/settings/api-tokens](https://betterstack.com/settings/api-tokens/0). For log querying, you'll also need ClickHouse SQL credentials from [Connect remotely](https://betterstack.com/docs/logs/query-api/connect-remotely/#getting-started) or ask your Better Stack admin.
 
 ## Usage
+
+### Logs
+
+```sh
+bs logs tail --source 12345                          # Live tail (like kubectl logs -f)
+bs logs tail --source 12345 -o json | jq '.message'  # Pipe to jq
+bs logs query "level:ERROR" --source 12345 --since 1h
+```
 
 ### Monitors
 
@@ -67,32 +75,24 @@ bs monitors list                        # List all monitors
 bs monitors list --status down          # Filter by status
 bs monitors get 12345                   # Get monitor details
 bs monitors create --url https://example.com --name "My Site"
-bs monitors pause 12345                 # Pause a monitor
-bs monitors resume 12345                # Resume a monitor
-bs monitors delete 12345                # Delete a monitor
+```
+
+### Incidents
+
+```sh
+bs incidents list --status started
+bs incidents ack 12345
+bs incidents resolve 12345
 ```
 
 ### Output formats
 
-```sh
-bs monitors list                        # Table (default, with colors)
-bs monitors list -o json                # JSON (great for piping to jq)
-bs monitors list -o csv                 # CSV
-```
-
-### AI agents
-
-The JSON output makes `bs` a natural fit for agentic workflows:
+Every command supports `-o json` for piping to `jq`, AI tools, or scripts:
 
 ```sh
-# AI agent checks which monitors are down
 bs monitors list -o json | jq '.[] | select(.Status == "down")'
-
-# Pipe into other tools
-bs monitors list -o json | jq '.[].URL' | xargs -I{} curl -s -o /dev/null -w "%{http_code} {}\n" {}
+bs logs tail --source 12345 -o json | jq '.level, .message'
 ```
-
-Any AI agent with shell access can use `bs` immediately, no MCP configuration, no tool schemas, no context overhead.
 
 ## Configuration
 
