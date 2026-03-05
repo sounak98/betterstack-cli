@@ -1,8 +1,14 @@
+pub mod incidents;
 pub mod pagination;
 pub mod retry;
+pub mod sql;
+pub mod telemetry;
 pub mod uptime;
 
+use anyhow::{Context, Result, bail};
 use reqwest::header::{AUTHORIZATION, CONTENT_TYPE, HeaderMap, HeaderValue};
+
+use crate::types::SingleResponse;
 
 pub struct HttpClient {
     client: reqwest::Client,
@@ -39,12 +45,25 @@ impl HttpClient {
         format!("{}{}", self.base_url, path)
     }
 
+    pub fn url_v3(&self, path: &str) -> String {
+        let v3_base = self.base_url.replace("/api/v2", "/api/v3");
+        format!("{}{}", v3_base, path)
+    }
+
     pub fn get(&self, path: &str) -> reqwest::RequestBuilder {
         self.client.get(self.url(path)).headers(self.headers())
     }
 
+    pub fn get_v3(&self, path: &str) -> reqwest::RequestBuilder {
+        self.client.get(self.url_v3(path)).headers(self.headers())
+    }
+
     pub fn post(&self, path: &str) -> reqwest::RequestBuilder {
         self.client.post(self.url(path)).headers(self.headers())
+    }
+
+    pub fn post_v3(&self, path: &str) -> reqwest::RequestBuilder {
+        self.client.post(self.url_v3(path)).headers(self.headers())
     }
 
     pub fn patch(&self, path: &str) -> reqwest::RequestBuilder {
@@ -55,7 +74,34 @@ impl HttpClient {
         self.client.delete(self.url(path)).headers(self.headers())
     }
 
+    pub fn delete_v3(&self, path: &str) -> reqwest::RequestBuilder {
+        self.client
+            .delete(self.url_v3(path))
+            .headers(self.headers())
+    }
+
     pub fn get_absolute(&self, url: &str) -> reqwest::RequestBuilder {
         self.client.get(url).headers(self.headers())
     }
+}
+
+/// Parse a single-resource response, or return an API error.
+pub async fn parse_one<T: serde::de::DeserializeOwned>(resp: reqwest::Response) -> Result<T> {
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        bail!("API error ({}): {}", status, body);
+    }
+    let single: SingleResponse<T> = resp.json().await.context("Failed to parse response")?;
+    Ok(single.data)
+}
+
+/// Check response status and return an error with body if not successful.
+pub async fn check_status(resp: reqwest::Response) -> Result<()> {
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        bail!("API error ({}): {}", status, body);
+    }
+    Ok(())
 }
