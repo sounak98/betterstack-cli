@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/sounak98/betterstack-cli/compare/v0.2.0...v0.3.0) (2026-03-05)
+
+
+### Features
+
+* add incidents, logs, SQL query API, and CLI improvements (Phase 2) ([#10](https://github.com/sounak98/betterstack-cli/issues/10)) ([992a83e](https://github.com/sounak98/betterstack-cli/commit/992a83e95cf17e5b49b2ca6b3ff9f9a2a6a8dcd8))
+
 ## [0.2.0](https://github.com/sounak98/betterstack-cli/compare/v0.1.1...v0.2.0) (2026-03-05)
 
 
