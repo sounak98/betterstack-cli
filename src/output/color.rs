@@ -31,6 +31,9 @@ pub fn status(s: &str) -> String {
         "paused" => format!("{YELLOW}{s}{RESET}"),
         "validating" | "pending" => format!("{CYAN}{s}{RESET}"),
         "maintenance" => format!("{DIM}{s}{RESET}"),
+        "started" => format!("{RED}{BOLD}{s}{RESET}"),
+        "acknowledged" => format!("{YELLOW}{s}{RESET}"),
+        "resolved" => format!("{GREEN}{s}{RESET}"),
         _ => s.to_string(),
     }
 }

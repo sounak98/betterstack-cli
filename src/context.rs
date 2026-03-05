@@ -5,6 +5,7 @@ use crate::adapters::http::HttpClient;
 /// Built once in main, passed to every command.
 pub struct AppContext {
     pub uptime: HttpClient,
+    pub telemetry: Option<HttpClient>,
     pub config: FileConfigStore,
     pub global: GlobalOptions,
 }

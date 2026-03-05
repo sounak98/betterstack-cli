@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::context::AppContext;
 use crate::output::CommandOutput;
-use crate::types::{CreateMonitorRequest, MonitorFilters, MonitorResource};
+use crate::types::{CreateMonitorRequest, MonitorFilters, MonitorResource, UpdateMonitorRequest};
 
 #[derive(clap::Args)]
 pub struct MonitorsCmd {
@@ -63,10 +63,61 @@ enum MonitorsSubCmd {
         /// Monitor ID.
         id: String,
     },
+    /// Update a monitor.
+    Update {
+        /// Monitor ID.
+        id: String,
+        /// New URL to monitor.
+        #[arg(long)]
+        url: Option<String>,
+        /// New display name.
+        #[arg(long)]
+        name: Option<String>,
+        /// Check frequency in seconds.
+        #[arg(long)]
+        frequency: Option<u32>,
+        /// HTTP method (GET, POST, HEAD, etc.).
+        #[arg(long)]
+        http_method: Option<String>,
+        /// Request timeout in seconds.
+        #[arg(long)]
+        timeout: Option<u32>,
+        /// Confirmation period in seconds.
+        #[arg(long)]
+        confirmation_period: Option<u32>,
+        /// Recovery period in seconds.
+        #[arg(long)]
+        recovery_period: Option<u32>,
+        /// Enable/disable SSL verification.
+        #[arg(long)]
+        verify_ssl: Option<bool>,
+    },
     /// Delete a monitor.
     Delete {
         /// Monitor ID.
         id: String,
+    },
+    /// Show availability/SLA for a monitor.
+    Availability {
+        /// Monitor ID.
+        id: String,
+        /// Start date (ISO 8601).
+        #[arg(long)]
+        from: Option<String>,
+        /// End date (ISO 8601).
+        #[arg(long)]
+        to: Option<String>,
+    },
+    /// Show response times for a monitor.
+    ResponseTimes {
+        /// Monitor ID.
+        id: String,
+        /// Start date (ISO 8601).
+        #[arg(long)]
+        from: Option<String>,
+        /// End date (ISO 8601).
+        #[arg(long)]
+        to: Option<String>,
     },
 }
 
@@ -156,12 +207,59 @@ impl MonitorsCmd {
                     name, monitor.id
                 )))
             }
+            MonitorsSubCmd::Update {
+                id,
+                url,
+                name,
+                frequency,
+                http_method,
+                timeout,
+                confirmation_period,
+                recovery_period,
+                verify_ssl,
+            } => {
+                let req = UpdateMonitorRequest {
+                    url: url.clone(),
+                    pronounceable_name: name.clone(),
+                    monitor_type: None,
+                    check_frequency: *frequency,
+                    regions: None,
+                    required_keyword: None,
+                    port: None,
+                    email: None,
+                    sms: None,
+                    call: None,
+                    verify_ssl: *verify_ssl,
+                    expected_status_codes: None,
+                    http_method: http_method.clone(),
+                    request_timeout: *timeout,
+                    confirmation_period: *confirmation_period,
+                    recovery_period: *recovery_period,
+                    paused: None,
+                };
+                let monitor = ctx.uptime.update_monitor(id, &req).await?;
+                Ok(monitor_to_detail(&monitor))
+            }
             MonitorsSubCmd::Delete { id } => {
                 ctx.uptime.delete_monitor(id).await?;
                 Ok(CommandOutput::Message(format!(
                     "Monitor (ID: {}) deleted.",
                     id
                 )))
+            }
+            MonitorsSubCmd::Availability { id, from, to } => {
+                let sla = ctx
+                    .uptime
+                    .monitor_sla(id, from.as_deref(), to.as_deref())
+                    .await?;
+                Ok(sla_to_detail(&sla))
+            }
+            MonitorsSubCmd::ResponseTimes { id, from, to } => {
+                let resource = ctx
+                    .uptime
+                    .monitor_response_times(id, from.as_deref(), to.as_deref())
+                    .await?;
+                Ok(response_times_to_table(&resource))
             }
         }
     }
@@ -278,6 +376,85 @@ fn monitor_to_detail(m: &MonitorResource) -> CommandOutput {
         ),
     ];
     CommandOutput::Detail { fields }
+}
+
+fn sla_to_detail(sla: &crate::types::SlaResource) -> CommandOutput {
+    let a = &sla.attributes;
+    let fields = vec![
+        ("Monitor ID".to_string(), sla.id.clone()),
+        (
+            "Availability".to_string(),
+            a.availability
+                .map(|v| format!("{:.4}%", v))
+                .unwrap_or_else(|| "-".to_string()),
+        ),
+        (
+            "Total Downtime".to_string(),
+            a.total_downtime
+                .map(format_duration)
+                .unwrap_or_else(|| "-".to_string()),
+        ),
+        (
+            "Incidents".to_string(),
+            a.number_of_incidents
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "-".to_string()),
+        ),
+        (
+            "Longest Incident".to_string(),
+            a.longest_incident
+                .map(format_duration)
+                .unwrap_or_else(|| "-".to_string()),
+        ),
+        (
+            "Avg Incident".to_string(),
+            a.average_incident
+                .map(format_duration)
+                .unwrap_or_else(|| "-".to_string()),
+        ),
+    ];
+    CommandOutput::Detail { fields }
+}
+
+fn response_times_to_table(resource: &crate::types::ResponseTimesResource) -> CommandOutput {
+    let headers = vec![
+        "At".to_string(),
+        "Region".to_string(),
+        "Response Time".to_string(),
+    ];
+
+    let mut rows: Vec<Vec<String>> = Vec::new();
+    if let Some(regions) = &resource.attributes.regions {
+        for region_data in regions {
+            let region_name = region_data.region.as_deref().unwrap_or("-");
+            if let Some(entries) = &region_data.response_times {
+                for entry in entries {
+                    rows.push(vec![
+                        entry.at.clone().unwrap_or_else(|| "-".to_string()),
+                        region_name.to_string(),
+                        entry
+                            .response_time
+                            .map(|v| format!("{:.3}s", v))
+                            .unwrap_or_else(|| "-".to_string()),
+                    ]);
+                }
+            }
+        }
+    }
+
+    CommandOutput::Table { headers, rows }
+}
+
+fn format_duration(seconds: f64) -> String {
+    if seconds < 60.0 {
+        format!("{:.0}s", seconds)
+    } else if seconds < 3600.0 {
+        format!("{:.1}m", seconds / 60.0)
+    } else if seconds < 86400.0 {
+        format!("{:.1}h", seconds / 3600.0)
+    } else {
+        format!("{:.1}d", seconds / 86400.0)
+    }
 }
 
 fn default_create_request() -> CreateMonitorRequest {

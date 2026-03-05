@@ -1,29 +1,11 @@
-use anyhow::{Context, Result, bail};
+use anyhow::Result;
 
-use super::HttpClient;
 use super::retry::with_retry;
-use crate::types::{CreateMonitorRequest, MonitorFilters, MonitorResource, SingleResponse};
-
-/// Parse a single-resource response, or return an API error.
-async fn parse_one<T: serde::de::DeserializeOwned>(resp: reqwest::Response) -> Result<T> {
-    let status = resp.status();
-    if !status.is_success() {
-        let body = resp.text().await.unwrap_or_default();
-        bail!("API error ({}): {}", status, body);
-    }
-    let single: SingleResponse<T> = resp.json().await.context("Failed to parse response")?;
-    Ok(single.data)
-}
-
-/// Check response status and return an error with body if not successful.
-async fn check_status(resp: reqwest::Response) -> Result<()> {
-    if !resp.status().is_success() {
-        let status = resp.status();
-        let body = resp.text().await.unwrap_or_default();
-        bail!("API error ({}): {}", status, body);
-    }
-    Ok(())
-}
+use super::{HttpClient, check_status, parse_one};
+use crate::types::{
+    CreateMonitorRequest, MonitorFilters, MonitorResource, ResponseTimesResource, SlaResource,
+    UpdateMonitorRequest,
+};
 
 impl HttpClient {
     pub async fn list_monitors(&self, filters: &MonitorFilters) -> Result<Vec<MonitorResource>> {
@@ -64,9 +46,61 @@ impl HttpClient {
         parse_one(resp).await
     }
 
+    pub async fn update_monitor(
+        &self,
+        id: &str,
+        req: &UpdateMonitorRequest,
+    ) -> Result<MonitorResource> {
+        let path = format!("/monitors/{id}");
+        let resp = with_retry(|| async { Ok(self.patch(&path).json(req).send().await?) }).await?;
+        parse_one(resp).await
+    }
+
     pub async fn delete_monitor(&self, id: &str) -> Result<()> {
         let path = format!("/monitors/{id}");
         let resp = with_retry(|| async { Ok(self.delete_req(&path).send().await?) }).await?;
         check_status(resp).await
+    }
+
+    pub async fn monitor_sla(
+        &self,
+        id: &str,
+        from: Option<&str>,
+        to: Option<&str>,
+    ) -> Result<SlaResource> {
+        let path = format!("/monitors/{id}/sla");
+        let resp = with_retry(|| async {
+            let mut req = self.get(&path);
+            if let Some(f) = from {
+                req = req.query(&[("from", f)]);
+            }
+            if let Some(t) = to {
+                req = req.query(&[("to", t)]);
+            }
+            Ok(req.send().await?)
+        })
+        .await?;
+        parse_one(resp).await
+    }
+
+    pub async fn monitor_response_times(
+        &self,
+        id: &str,
+        from: Option<&str>,
+        to: Option<&str>,
+    ) -> Result<ResponseTimesResource> {
+        let path = format!("/monitors/{id}/response-times");
+        let resp = with_retry(|| async {
+            let mut req = self.get(&path);
+            if let Some(f) = from {
+                req = req.query(&[("from", f)]);
+            }
+            if let Some(t) = to {
+                req = req.query(&[("to", t)]);
+            }
+            Ok(req.send().await?)
+        })
+        .await?;
+        parse_one(resp).await
     }
 }

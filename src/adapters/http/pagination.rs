@@ -13,6 +13,25 @@ impl HttpClient {
         path: &str,
         query_params: &[(&str, &str)],
     ) -> Result<Vec<T>> {
+        self.paginate_all_with_builder(self.get(path), query_params)
+            .await
+    }
+
+    /// Fetches all pages from a v3 paginated endpoint, following `pagination.next` links.
+    pub async fn paginate_all_v3<T: DeserializeOwned>(
+        &self,
+        path: &str,
+        query_params: &[(&str, &str)],
+    ) -> Result<Vec<T>> {
+        self.paginate_all_with_builder(self.get_v3(path), query_params)
+            .await
+    }
+
+    async fn paginate_all_with_builder<T: DeserializeOwned>(
+        &self,
+        initial_req: reqwest::RequestBuilder,
+        query_params: &[(&str, &str)],
+    ) -> Result<Vec<T>> {
         let mut all = Vec::new();
         let mut next_url: Option<String> = None;
 
@@ -20,7 +39,7 @@ impl HttpClient {
             let resp = if let Some(ref url) = next_url {
                 with_retry(|| async { Ok(self.get_absolute(url).send().await?) }).await?
             } else {
-                let mut req = self.get(path);
+                let mut req = initial_req.try_clone().expect("request clone failed");
                 for (k, v) in query_params {
                     req = req.query(&[(*k, *v)]);
                 }

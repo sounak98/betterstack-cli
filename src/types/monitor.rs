@@ -81,6 +81,92 @@ pub struct CreateMonitorRequest {
     pub paused: Option<bool>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct UpdateMonitorRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pronounceable_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub monitor_type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub check_frequency: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub regions: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required_keyword: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub port: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sms: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub call: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verify_ssl: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expected_status_codes: Option<Vec<u16>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub http_method: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_timeout: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confirmation_period: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub recovery_period: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub paused: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct SlaResource {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub resource_type: Option<String>,
+    pub attributes: SlaAttributes,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct SlaAttributes {
+    pub availability: Option<f64>,
+    pub total_downtime: Option<f64>,
+    pub number_of_incidents: Option<u32>,
+    pub longest_incident: Option<f64>,
+    pub average_incident: Option<f64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct ResponseTimesResource {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub resource_type: Option<String>,
+    pub attributes: ResponseTimesAttributes,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct ResponseTimesAttributes {
+    pub regions: Option<Vec<RegionResponseTimes>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct RegionResponseTimes {
+    pub region: Option<String>,
+    pub response_times: Option<Vec<ResponseTimeEntry>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct ResponseTimeEntry {
+    pub at: Option<String>,
+    pub response_time: Option<f64>,
+}
+
 #[derive(Debug, Default, Clone)]
 pub struct MonitorFilters {
     pub status: Option<String>,

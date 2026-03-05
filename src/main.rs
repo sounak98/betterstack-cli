@@ -3,7 +3,7 @@ use clap::{CommandFactory, Parser};
 
 use bs_cli::adapters::config::FileConfigStore;
 use bs_cli::adapters::http::HttpClient;
-use bs_cli::commands::{AuthCmd, MonitorsCmd};
+use bs_cli::commands::{AuthCmd, IncidentsCmd, LogsCmd, MonitorsCmd};
 use bs_cli::context::{AppContext, GlobalOptions, OutputFormat};
 use bs_cli::output;
 
@@ -38,6 +38,10 @@ struct Cli {
 enum Command {
     /// Manage authentication.
     Auth(AuthCmd),
+    /// Manage incidents.
+    Incidents(IncidentsCmd),
+    /// Query and manage logs.
+    Logs(LogsCmd),
     /// Manage uptime monitors.
     Monitors(MonitorsCmd),
     /// Update bs to the latest version.
@@ -50,6 +54,18 @@ fn resolve_token(cli_token: Option<&str>, config_store: &FileConfigStore) -> Opt
     }
     if let Ok(config) = config_store.load() {
         return config.auth.uptime_token;
+    }
+    None
+}
+
+fn resolve_telemetry_token(config_store: &FileConfigStore) -> Option<String> {
+    if let Ok(t) = std::env::var("BETTERSTACK_TELEMETRY_TOKEN")
+        && !t.is_empty()
+    {
+        return Some(t);
+    }
+    if let Ok(config) = config_store.load() {
+        return config.auth.telemetry_token;
     }
     None
 }
@@ -73,7 +89,10 @@ async fn main() -> Result<()> {
     let token = resolve_token(cli.token.as_deref(), &config_store);
 
     // Auth and upgrade commands don't require a token
-    let needs_token = !matches!(command, Command::Auth(_) | Command::Upgrade);
+    let needs_token = !matches!(
+        command,
+        Command::Auth(_) | Command::Upgrade | Command::Logs(_)
+    );
 
     let uptime = if needs_token {
         let token = token.ok_or_else(|| {
@@ -86,8 +105,11 @@ async fn main() -> Result<()> {
         HttpClient::uptime("")
     };
 
+    let telemetry = resolve_telemetry_token(&config_store).map(|t| HttpClient::telemetry(&t));
+
     let ctx = AppContext {
         uptime,
+        telemetry,
         config: config_store,
         global: GlobalOptions {
             output_format,
@@ -99,6 +121,8 @@ async fn main() -> Result<()> {
 
     let result = match command {
         Command::Auth(cmd) => cmd.run(&ctx).await,
+        Command::Incidents(cmd) => cmd.run(&ctx).await,
+        Command::Logs(cmd) => cmd.run(&ctx).await,
         Command::Monitors(cmd) => cmd.run(&ctx).await,
         Command::Upgrade => bs_cli::commands::upgrade::run().await,
     };
