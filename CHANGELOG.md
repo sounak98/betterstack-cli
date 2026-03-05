@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/sounak98/betterstack-cli/compare/v0.1.1...v0.2.0) (2026-03-05)
+
+
+### Features
+
+* add incidents, logs, monitor expansion, and query compiler (Phase 2) ([4357ccb](https://github.com/sounak98/betterstack-cli/commit/4357ccb61bb78ec44da51d9b5aecab6fa5a2e8d8))
+* Phase 2 - incidents, logs, monitor expansion, query compiler ([#8](https://github.com/sounak98/betterstack-cli/issues/8)) ([4357ccb](https://github.com/sounak98/betterstack-cli/commit/4357ccb61bb78ec44da51d9b5aecab6fa5a2e8d8))
+
 ## [0.1.1](https://github.com/sounak98/betterstack-cli/compare/v0.1.0...v0.1.1) (2026-03-05)
 
 
