@@ -28,6 +28,7 @@ pub fn render(output: &CommandOutput) -> String {
             serde_json::to_string_pretty(&serde_json::json!({ "message": msg }))
                 .unwrap_or_else(|_| "{}".to_string())
         }
+        CommandOutput::Raw(s) => s.clone(),
         CommandOutput::Empty => String::new(),
     }
 }

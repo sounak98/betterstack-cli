@@ -22,11 +22,13 @@ enum MonitorsSubCmd {
         monitor_type: Option<String>,
     },
     /// Get details of a specific monitor.
+    #[command(arg_required_else_help = true)]
     Get {
         /// Monitor ID.
         id: String,
     },
     /// Create a new monitor.
+    #[command(arg_required_else_help = true)]
     Create {
         /// URL to monitor.
         #[arg(long)]
@@ -54,16 +56,19 @@ enum MonitorsSubCmd {
         email: bool,
     },
     /// Pause a monitor.
+    #[command(arg_required_else_help = true)]
     Pause {
         /// Monitor ID.
         id: String,
     },
     /// Resume a paused monitor.
+    #[command(arg_required_else_help = true)]
     Resume {
         /// Monitor ID.
         id: String,
     },
     /// Update a monitor.
+    #[command(arg_required_else_help = true)]
     Update {
         /// Monitor ID.
         id: String,
@@ -93,11 +98,13 @@ enum MonitorsSubCmd {
         verify_ssl: Option<bool>,
     },
     /// Delete a monitor.
+    #[command(arg_required_else_help = true)]
     Delete {
         /// Monitor ID.
         id: String,
     },
     /// Show availability/SLA for a monitor.
+    #[command(arg_required_else_help = true)]
     Availability {
         /// Monitor ID.
         id: String,
@@ -109,6 +116,7 @@ enum MonitorsSubCmd {
         to: Option<String>,
     },
     /// Show response times for a monitor.
+    #[command(arg_required_else_help = true)]
     ResponseTimes {
         /// Monitor ID.
         id: String,

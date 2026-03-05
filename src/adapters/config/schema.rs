@@ -16,11 +16,11 @@ pub struct AuthConfig {
     pub sql: Option<SqlAuthConfig>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct SqlAuthConfig {
+    pub host: Option<String>,
     pub username: Option<String>,
     pub password: Option<String>,
-    pub region: Option<String>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]

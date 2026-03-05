@@ -10,8 +10,12 @@ pub struct SqlClient {
 }
 
 impl SqlClient {
-    pub fn new(region: &str, username: &str, password: &str) -> Self {
-        let base_url = format!("https://{region}-connect.betterstackdata.com");
+    pub fn new(host: &str, username: &str, password: &str) -> Self {
+        let base_url = if host.starts_with("https://") {
+            host.to_string()
+        } else {
+            format!("https://{host}")
+        };
         Self {
             client: reqwest::Client::new(),
             base_url,
@@ -22,14 +26,23 @@ impl SqlClient {
 
     pub async fn query(&self, sql: &str) -> Result<String> {
         let url = &self.base_url;
-        let resp = with_retry(|| async {
-            Ok(self
-                .client
-                .post(url)
-                .basic_auth(&self.username, Some(&self.password))
-                .body(format!("{sql} FORMAT JSONEachRow"))
-                .send()
-                .await?)
+        let is_select = sql.trim_start().to_uppercase().starts_with("SELECT");
+        let body = if is_select {
+            format!("{sql} FORMAT JSONEachRow")
+        } else {
+            sql.to_string()
+        };
+        let resp = with_retry(|| {
+            let body = body.clone();
+            async move {
+                Ok(self
+                    .client
+                    .post(url)
+                    .basic_auth(&self.username, Some(&self.password))
+                    .body(body)
+                    .send()
+                    .await?)
+            }
         })
         .await?;
 

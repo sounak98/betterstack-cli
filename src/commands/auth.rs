@@ -1,8 +1,7 @@
-use std::io::{self, BufRead, Write};
-
 use anyhow::Result;
 
-use crate::adapters::config::schema::{AuthConfig, ConfigFile, DefaultsConfig};
+use super::{prompt, prompt_secret};
+use crate::adapters::config::schema::{AuthConfig, ConfigFile, DefaultsConfig, SqlAuthConfig};
 use crate::context::AppContext;
 use crate::output::CommandOutput;
 
@@ -41,51 +40,6 @@ impl AuthCmd {
     }
 }
 
-fn prompt(label: &str) -> Result<String> {
-    eprint!("{label}: ");
-    io::stderr().flush()?;
-    let mut input = String::new();
-    io::stdin().read_line(&mut input)?;
-    Ok(input.trim().to_string())
-}
-
-/// Prompt for sensitive input with terminal echo disabled.
-/// Falls back to normal prompt if stdin is not a terminal (e.g. piped input).
-fn prompt_secret(label: &str) -> Result<String> {
-    use std::os::unix::io::AsRawFd;
-
-    let stdin = io::stdin();
-    let fd = stdin.as_raw_fd();
-
-    // Check if stdin is a TTY
-    if unsafe { libc::isatty(fd) } != 1 {
-        return prompt(label);
-    }
-
-    eprint!("{label}: ");
-    io::stderr().flush()?;
-
-    // Disable echo
-    let mut termios = std::mem::MaybeUninit::uninit();
-    if unsafe { libc::tcgetattr(fd, termios.as_mut_ptr()) } != 0 {
-        return prompt(label);
-    }
-    let mut termios = unsafe { termios.assume_init() };
-    let original = termios;
-    termios.c_lflag &= !libc::ECHO;
-    unsafe { libc::tcsetattr(fd, libc::TCSANOW, &termios) };
-
-    let mut input = String::new();
-    let result = stdin.lock().read_line(&mut input);
-
-    // Restore echo
-    unsafe { libc::tcsetattr(fd, libc::TCSANOW, &original) };
-    eprintln!(); // newline after hidden input
-
-    result?;
-    Ok(input.trim().to_string())
-}
-
 fn mask_token(t: &str) -> String {
     if t.len() > 8 {
         format!("{}...{}", &t[..4], &t[t.len() - 4..])
@@ -95,47 +49,158 @@ fn mask_token(t: &str) -> String {
 }
 
 async fn run_init(ctx: &AppContext) -> Result<CommandOutput> {
+    let existing = ctx.config.load().unwrap_or_default();
+    let has_existing = ctx.config.exists();
+
     eprintln!("Better Stack CLI Setup\n");
     eprintln!("Create your API tokens at:");
     eprintln!("  https://betterstack.com/settings/api-tokens/0\n");
 
-    let uptime_token = prompt_secret("Uptime API token")?;
-    if uptime_token.is_empty() {
-        anyhow::bail!(
-            "Uptime API token is required. Get one at https://betterstack.com/settings/api-tokens/0"
-        );
+    if has_existing {
+        eprintln!("Existing config found. Press Enter to keep current values.\n");
     }
 
-    let telemetry_token = prompt_secret("Telemetry API token (press Enter to skip)")?;
-    let team = prompt("Default team name (press Enter to skip)")?;
-
-    eprint!("Validating uptime token... ");
-    let test_client = crate::adapters::http::HttpClient::uptime(&uptime_token);
-    let filters = crate::types::MonitorFilters::default();
-    match test_client.list_monitors(&filters).await {
-        Ok(_) => eprintln!("valid!"),
-        Err(e) => {
-            eprintln!("failed!");
+    // Uptime token
+    let existing_uptime = existing.auth.uptime_token.as_deref().unwrap_or("");
+    let uptime_label = if existing_uptime.is_empty() {
+        "Uptime API token".to_string()
+    } else {
+        format!("Uptime API token [{}]", mask_token(existing_uptime))
+    };
+    let uptime_input = prompt_secret(&uptime_label)?;
+    let uptime_token = if uptime_input.is_empty() {
+        if existing_uptime.is_empty() {
             anyhow::bail!(
-                "Token validation failed: {}. Check your token and try again.",
-                e
+                "Uptime API token is required. Get one at https://betterstack.com/settings/api-tokens/0"
             );
+        }
+        existing_uptime.to_string()
+    } else {
+        uptime_input
+    };
+
+    // Telemetry token
+    let existing_telemetry = existing.auth.telemetry_token.as_deref().unwrap_or("");
+    let telemetry_label = if existing_telemetry.is_empty() {
+        "Telemetry API token (Enter to skip)".to_string()
+    } else {
+        format!(
+            "Telemetry API token [{}] (Enter to keep)",
+            mask_token(existing_telemetry)
+        )
+    };
+    let telemetry_input = prompt_secret(&telemetry_label)?;
+    let telemetry_token = if telemetry_input.is_empty() {
+        existing.auth.telemetry_token.clone()
+    } else {
+        Some(telemetry_input)
+    };
+
+    // Team
+    let existing_team = existing.defaults.team.as_deref().unwrap_or("");
+    let team_label = if existing_team.is_empty() {
+        "Default team name (Enter to skip)".to_string()
+    } else {
+        format!("Default team name [{}] (Enter to keep)", existing_team)
+    };
+    let team_input = prompt(&team_label)?;
+    let team = if team_input.is_empty() {
+        existing.defaults.team.clone()
+    } else {
+        Some(team_input)
+    };
+
+    // SQL Query API credentials (optional, for bs logs)
+    let existing_sql = existing.auth.sql.clone().unwrap_or_default();
+    let existing_sql_host = existing_sql.host.as_deref().unwrap_or("");
+    let existing_sql_user = existing_sql.username.as_deref().unwrap_or("");
+    let existing_sql_pass = existing_sql.password.as_deref().unwrap_or("");
+
+    eprintln!("\nSQL Query API (for bs logs sql/query/tail):");
+    eprintln!("  Get credentials from your team lead or auto-provision with a global API token.\n");
+
+    let sql_host_label = if existing_sql_host.is_empty() {
+        "SQL host (Enter to skip)".to_string()
+    } else {
+        format!(
+            "SQL host [{}] (Enter to keep)",
+            mask_token(existing_sql_host)
+        )
+    };
+    let sql_host_input = prompt(&sql_host_label)?;
+
+    let sql = if !sql_host_input.is_empty() || !existing_sql_host.is_empty() {
+        let sql_host = if sql_host_input.is_empty() {
+            existing_sql_host.to_string()
+        } else {
+            sql_host_input
+        };
+
+        let sql_user_label = if existing_sql_user.is_empty() {
+            "SQL username".to_string()
+        } else {
+            format!(
+                "SQL username [{}] (Enter to keep)",
+                mask_token(existing_sql_user)
+            )
+        };
+        let sql_user_input = prompt(&sql_user_label)?;
+        let sql_user = if sql_user_input.is_empty() {
+            existing_sql_user.to_string()
+        } else {
+            sql_user_input
+        };
+
+        let sql_pass_label = if existing_sql_pass.is_empty() {
+            "SQL password".to_string()
+        } else {
+            format!(
+                "SQL password [{}] (Enter to keep)",
+                mask_token(existing_sql_pass)
+            )
+        };
+        let sql_pass_input = prompt_secret(&sql_pass_label)?;
+        let sql_pass = if sql_pass_input.is_empty() {
+            existing_sql_pass.to_string()
+        } else {
+            sql_pass_input
+        };
+
+        Some(SqlAuthConfig {
+            host: Some(sql_host),
+            username: Some(sql_user),
+            password: Some(sql_pass),
+        })
+    } else {
+        existing.auth.sql.clone()
+    };
+
+    // Validate uptime token only if it changed
+    if uptime_token != existing_uptime {
+        eprint!("\nValidating uptime token... ");
+        let test_client = crate::adapters::http::HttpClient::uptime(&uptime_token);
+        let filters = crate::types::MonitorFilters::default();
+        match test_client.list_monitors(&filters).await {
+            Ok(_) => eprintln!("valid!"),
+            Err(e) => {
+                eprintln!("failed!");
+                anyhow::bail!(
+                    "Token validation failed: {}. Check your token and try again.",
+                    e
+                );
+            }
         }
     }
 
     let config = ConfigFile {
         auth: AuthConfig {
             uptime_token: Some(uptime_token),
-            telemetry_token: if telemetry_token.is_empty() {
-                None
-            } else {
-                Some(telemetry_token)
-            },
-            sql: None,
+            telemetry_token,
+            sql,
         },
         defaults: DefaultsConfig {
-            team: if team.is_empty() { None } else { Some(team) },
-            output: None,
+            team,
+            output: existing.defaults.output,
         },
     };
 
@@ -170,6 +235,15 @@ fn run_status(ctx: &AppContext) -> Result<CommandOutput> {
         .map(mask_token)
         .unwrap_or_else(|| "not set".to_string());
 
+    let sql_status = match config.auth.sql.as_ref() {
+        Some(sql) if sql.host.is_some() && sql.username.is_some() => {
+            let host = sql.host.as_deref().unwrap_or("");
+            let user = sql.username.as_deref().unwrap_or("");
+            format!("{}@{}", mask_token(user), mask_token(host))
+        }
+        _ => "not set".to_string(),
+    };
+
     let team = config
         .defaults
         .team
@@ -180,6 +254,7 @@ fn run_status(ctx: &AppContext) -> Result<CommandOutput> {
             ("Config file".to_string(), ctx.config.path_display()),
             ("Uptime token".to_string(), uptime_status),
             ("Telemetry token".to_string(), telemetry_status),
+            ("SQL connection".to_string(), sql_status),
             ("Default team".to_string(), team),
         ],
     })
