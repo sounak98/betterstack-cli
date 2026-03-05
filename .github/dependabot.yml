@@ -13,5 +13,5 @@ updates:
     schedule:
       interval: weekly
     commit-message:
-      prefix: "fix(ci):"
+      prefix: "chore(ci):"
     open-pull-requests-limit: 5
