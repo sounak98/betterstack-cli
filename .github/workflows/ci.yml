@@ -10,6 +10,30 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  commit-lint:
+    name: Commit Lint
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Check conventional commits
+        run: |
+          PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+'
+          FAILED=0
+          for sha in $(git log --format='%H' origin/main~1..HEAD 2>/dev/null || git log --format='%H' -1); do
+            msg=$(git log --format='%s' -1 "$sha")
+            if ! echo "$msg" | grep -qE "$PATTERN"; then
+              echo "Bad commit message: $msg"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" = "1" ]; then
+            echo "Commit messages must follow conventional commits: type(scope): subject"
+            exit 1
+          fi
+
   check:
     name: Check
     runs-on: ubuntu-latest
