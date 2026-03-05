@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/sounak98/betterstack-cli/compare/v0.1.0...v0.1.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* disable reqwest default features to avoid openssl in cross builds ([#5](https://github.com/sounak98/betterstack-cli/issues/5)) ([b008bc5](https://github.com/sounak98/betterstack-cli/commit/b008bc5df42ab245dd3b86dc9536f7c7d200d8d8))
+
 ## 0.1.0 (2026-03-05)
 
 
