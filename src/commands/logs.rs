@@ -31,10 +31,10 @@ enum LogsSubCmd {
         #[arg(long, default_value = "100")]
         limit: u32,
     },
-    /// Query logs with a simple filter syntax.
+    /// Query logs using Better Stack query language (https://betterstack.com/docs/logs/using-logtail/live-tail-query-language/).
     #[command(arg_required_else_help = true)]
     Query {
-        /// Filter expression (e.g. "level:error AND status:>=500").
+        /// Filter expression (e.g. 'level = ERROR AND status >= 500').
         filter: String,
         /// Source ID, name, or table name (use `bs logs sources` to list).
         #[arg(long)]
@@ -58,7 +58,8 @@ enum LogsSubCmd {
         /// How far back to start (e.g. 5m, 1h). Defaults to 5m.
         #[arg(long, default_value = "5m")]
         since: String,
-        /// Filter expression (e.g. "level:ERROR", "service:api-gateway AND status:>=500").
+        /// Filter using Better Stack query language (https://betterstack.com/docs/logs/using-logtail/live-tail-query-language/).
+        /// Examples: 'level = ERROR', 'status >= 500 AND message : "timeout"'
         #[arg(long)]
         query: Option<String>,
         /// Poll interval in seconds.

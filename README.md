@@ -68,9 +68,12 @@ Get your API tokens at [betterstack.com/settings/api-tokens](https://betterstack
 
 ```sh
 bs logs tail --source 12345                          # Live tail (like kubectl logs -f)
+bs logs tail --source 12345 --query 'level = ERROR'  # Tail with filter
 bs logs tail --source 12345 -o json | jq '.message'  # Pipe to jq
-bs logs query "level:ERROR" --source 12345 --since 1h
+bs logs query 'level = ERROR AND status >= 500' --source 12345 --since 1h
 ```
+
+Queries use the [Better Stack Live Tail query language](https://betterstack.com/docs/logs/using-logtail/live-tail-query-language/).
 
 ### Monitors
 
