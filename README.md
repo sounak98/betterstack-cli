@@ -7,7 +7,7 @@
 Fast, AI-friendly CLI for [Better Stack](https://betterstack.com). Built for humans, scripts, and AI agents.
 
 <p align="center">
-  <img src="assets/demo.gif" alt="bs logs tail demo" width="800">
+  <img src="assets/demo/demo.gif" alt="bs logs tail demo" width="800">
 </p>
 
 ## Why a CLI?
