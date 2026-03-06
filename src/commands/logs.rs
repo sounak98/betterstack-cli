@@ -31,10 +31,10 @@ enum LogsSubCmd {
         #[arg(long, default_value = "100")]
         limit: u32,
     },
-    /// Query logs with a simple filter syntax.
+    /// Query logs using Better Stack query language (https://betterstack.com/docs/logs/using-logtail/live-tail-query-language/).
     #[command(arg_required_else_help = true)]
     Query {
-        /// Filter expression (e.g. "level:error AND status:>=500").
+        /// Filter expression (e.g. 'level = ERROR AND status >= 500').
         filter: String,
         /// Source ID, name, or table name (use `bs logs sources` to list).
         #[arg(long)]
@@ -58,6 +58,10 @@ enum LogsSubCmd {
         /// How far back to start (e.g. 5m, 1h). Defaults to 5m.
         #[arg(long, default_value = "5m")]
         since: String,
+        /// Filter using Better Stack query language (https://betterstack.com/docs/logs/using-logtail/live-tail-query-language/).
+        /// Examples: 'level = ERROR', 'status >= 500 AND message : "timeout"'
+        #[arg(long)]
+        query: Option<String>,
         /// Poll interval in seconds.
         #[arg(long, default_value = "2")]
         interval: u64,
@@ -136,6 +140,7 @@ impl LogsCmd {
             LogsSubCmd::Tail {
                 source,
                 since,
+                query,
                 interval,
             } => {
                 let table = resolve_table_name(source, ctx).await?;
@@ -145,6 +150,7 @@ impl LogsCmd {
                     &sql_client,
                     &table,
                     since,
+                    query.as_deref(),
                     *interval,
                     ctx.global.no_color,
                     json_output,
@@ -464,25 +470,53 @@ async fn run_tail(
     sql_client: &SqlClient,
     source: &str,
     since: &str,
+    query: Option<&str>,
     interval: u64,
     no_color: bool,
     json_output: bool,
 ) -> Result<CommandOutput> {
     use std::io::Write;
 
-    eprintln!("Tailing logs from '{source}' (Ctrl+C to stop)...\n");
+    if no_color {
+        eprintln!("Tailing source {source} (Ctrl+C to stop)\n");
+    } else {
+        eprintln!(
+            "\x1b[36m\x1b[1m●\x1b[0m Tailing source \x1b[1m{source}\x1b[0m \x1b[2m(Ctrl+C to stop)\x1b[0m\n"
+        );
+    }
 
     let time_filter = crate::query::parse_duration_filter(since)?;
+    let query_filter = query
+        .map(crate::query::parse_filter)
+        .transpose()?
+        .unwrap_or_default();
     let mut last_dt: Option<String> = None;
+
+    let base_where = if query_filter.is_empty() {
+        time_filter.clone()
+    } else {
+        format!("{time_filter} AND ({query_filter})")
+    };
 
     // Phase 1: fetch all historical logs in the --since window (chronological order)
     let initial_sql =
-        format!("SELECT dt, raw FROM remote({source}) WHERE {time_filter} ORDER BY dt ASC");
-    let rows = sql_client.query_json(&initial_sql).await?;
+        format!("SELECT dt, raw FROM remote({source}) WHERE {base_where} ORDER BY dt ASC");
+    let rows = tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            eprintln!("\nStopped.");
+            return Ok(CommandOutput::Empty);
+        }
+        result = sql_client.query_json(&initial_sql) => result?,
+    };
     if rows.is_empty() {
-        eprintln!("No logs found in the last {since}. Waiting for new logs...");
+        eprintln!("No logs in the last {since}. Waiting for new logs...\n");
+    } else if no_color {
+        eprintln!("-- {} logs from the last {since} --\n", rows.len());
     } else {
-        eprintln!("Showing {} logs from the last {since}:\n", rows.len());
+        eprintln!(
+            "\x1b[2m-- {} logs from the last {since} --\x1b[0m\n",
+            rows.len()
+        );
     }
     for row in &rows {
         print_tail_row(row, no_color, json_output);
@@ -502,19 +536,28 @@ async fn run_tail(
             _ = tokio::time::sleep(std::time::Duration::from_secs(interval)) => {}
         }
 
-        let poll_sql = if let Some(ref dt) = last_dt {
+        let poll_where = if let Some(ref dt) = last_dt {
             let escaped_dt = dt.replace('\'', "\\'");
-            format!(
-                "SELECT dt, raw FROM remote({source}) WHERE dt > '{escaped_dt}' ORDER BY dt ASC LIMIT 1000"
-            )
+            if query_filter.is_empty() {
+                format!("dt > '{escaped_dt}'")
+            } else {
+                format!("dt > '{escaped_dt}' AND ({query_filter})")
+            }
         } else {
-            // No logs yet, keep checking the since window
-            format!(
-                "SELECT dt, raw FROM remote({source}) WHERE {time_filter} ORDER BY dt ASC LIMIT 1000"
-            )
+            base_where.clone()
         };
+        let poll_sql = format!(
+            "SELECT dt, raw FROM remote({source}) WHERE {poll_where} ORDER BY dt ASC LIMIT 1000"
+        );
 
-        match sql_client.query_json(&poll_sql).await {
+        let poll_result = tokio::select! {
+            _ = tokio::signal::ctrl_c() => {
+                eprintln!("\nStopped.");
+                return Ok(CommandOutput::Empty);
+            }
+            result = sql_client.query_json(&poll_sql) => result,
+        };
+        match poll_result {
             Ok(rows) => {
                 for row in &rows {
                     print_tail_row(row, no_color, json_output);
@@ -607,16 +650,18 @@ fn print_log_line(row: &serde_json::Value, no_color: bool) {
     let short_dt = if dt.len() > 19 { &dt[..19] } else { &dt };
     let short_dt = utc_to_local(short_dt);
 
+    let upper_level = level.to_uppercase();
+
     let level_display = if no_color {
-        format!("[{level}]")
+        format!(
+            "{:<5}",
+            match upper_level.as_str() {
+                "WARNING" => "WARN",
+                _ => &upper_level,
+            }
+        )
     } else {
-        match level.to_uppercase().as_str() {
-            "ERROR" | "FATAL" | "CRITICAL" => color::red(&format!("[{level}]")),
-            "WARN" | "WARNING" => format!("\x1b[33m[{level}]\x1b[0m"),
-            "INFO" => color::green(&format!("[{level}]")),
-            "DEBUG" | "TRACE" => color::dim(&format!("[{level}]")),
-            _ => format!("[{level}]"),
-        }
+        color::level_badge(&level)
     };
 
     let dt_display = if no_color {
@@ -637,9 +682,20 @@ fn print_log_line(row: &serde_json::Value, no_color: bool) {
         serde_json::to_string(&parsed).unwrap_or_default()
     };
 
-    if level.is_empty() {
-        println!("{dt_display}  {content}");
+    // Color the message text based on severity
+    let content_display = if no_color {
+        content
     } else {
-        println!("{dt_display}  {level_display} {content}");
+        match upper_level.as_str() {
+            "ERROR" | "FATAL" | "CRITICAL" => color::red(&content),
+            "DEBUG" | "TRACE" => color::dim(&content),
+            _ => content,
+        }
+    };
+
+    if level.is_empty() {
+        println!("{dt_display}  {content_display}");
+    } else {
+        println!("{dt_display} {level_display} {content_display}");
     }
 }

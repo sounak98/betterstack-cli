@@ -6,6 +6,10 @@
 
 Fast, AI-friendly CLI for [Better Stack](https://betterstack.com). Built for humans, scripts, and AI agents.
 
+<p align="center">
+  <img src="assets/demo/demo.gif" alt="bs logs tail demo" width="800">
+</p>
+
 ## Why a CLI?
 
 Better Stack already has an [MCP server](https://betterstack.com/docs/getting-started/integrations/mcp/). So why build a CLI?
@@ -64,9 +68,12 @@ Get your API tokens at [betterstack.com/settings/api-tokens](https://betterstack
 
 ```sh
 bs logs tail --source 12345                          # Live tail (like kubectl logs -f)
+bs logs tail --source 12345 --query 'level = ERROR'  # Tail with filter
 bs logs tail --source 12345 -o json | jq '.message'  # Pipe to jq
-bs logs query "level:ERROR" --source 12345 --since 1h
+bs logs query 'level = ERROR AND status >= 500' --source 12345 --since 1h
 ```
+
+Queries use the [Better Stack Live Tail query language](https://betterstack.com/docs/logs/using-logtail/live-tail-query-language/).
 
 ### Monitors
 
