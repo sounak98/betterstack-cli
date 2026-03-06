@@ -271,13 +271,7 @@ fn colorize_value(header: &str, value: &str, no_color: bool) -> String {
                 color::green(value)
             }
         }
-        "level" => match value.to_uppercase().as_str() {
-            "ERROR" | "FATAL" | "CRITICAL" => color::red(value),
-            "WARN" | "WARNING" => format!("\x1b[33m{value}\x1b[0m"),
-            "INFO" => color::green(value),
-            "DEBUG" | "TRACE" => color::dim(value),
-            _ => value.to_string(),
-        },
+        "level" => color::level_badge(value),
         "dt" => color::dim(value),
         _ => value.to_string(),
     }
