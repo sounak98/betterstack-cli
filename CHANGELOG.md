@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/sounak98/betterstack-cli/compare/v0.3.0...v0.4.0) (2026-03-06)
+
+
+### Features
+
+* Better Stack query language, tail improvements, and level badges ([#13](https://github.com/sounak98/betterstack-cli/issues/13)) ([f2b1218](https://github.com/sounak98/betterstack-cli/commit/f2b1218f475d171de7fb7ba29bc35fce6df31d91))
+
 ## [0.3.0](https://github.com/sounak98/betterstack-cli/compare/v0.2.0...v0.3.0) (2026-03-05)
 
 
