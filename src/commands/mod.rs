@@ -3,11 +3,13 @@ pub mod heartbeat_groups;
 pub mod heartbeats;
 pub mod incidents;
 pub mod logs;
+pub mod monitor_groups;
 pub mod monitors;
 pub mod oncall;
 pub mod policies;
 pub mod severities;
 pub mod sources;
+pub mod status_pages;
 pub mod upgrade;
 
 pub use auth::AuthCmd;
@@ -15,11 +17,13 @@ pub use heartbeat_groups::HeartbeatGroupsCmd;
 pub use heartbeats::HeartbeatsCmd;
 pub use incidents::IncidentsCmd;
 pub use logs::LogsCmd;
+pub use monitor_groups::MonitorGroupsCmd;
 pub use monitors::MonitorsCmd;
 pub use oncall::OnCallCmd;
 pub use policies::PoliciesCmd;
 pub use severities::SeveritiesCmd;
 pub use sources::SourcesCmd;
+pub use status_pages::StatusPagesCmd;
 
 use std::io::{self, BufRead, Write};
 
