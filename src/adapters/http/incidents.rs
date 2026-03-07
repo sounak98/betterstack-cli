@@ -74,8 +74,7 @@ impl HttpClient {
         req: &EscalateIncidentRequest,
     ) -> Result<IncidentResource> {
         let path = format!("/incidents/{id}/escalate");
-        let resp =
-            with_retry(|| async { Ok(self.post_v3(&path).json(req).send().await?) }).await?;
+        let resp = with_retry(|| async { Ok(self.post_v3(&path).json(req).send().await?) }).await?;
         parse_one(resp).await
     }
 
