@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/sounak98/betterstack-cli/compare/v0.5.0...v0.5.1) (2026-03-07)
+
+
+### Bug Fixes
+
+* auto-configure zsh completions in install script ([#19](https://github.com/sounak98/betterstack-cli/issues/19)) ([063e638](https://github.com/sounak98/betterstack-cli/commit/063e6381624abbc4a46c5836d8e1dd0ea0fe3559))
+
 ## [0.5.0](https://github.com/sounak98/betterstack-cli/compare/v0.4.0...v0.5.0) (2026-03-07)
 
 
