@@ -29,7 +29,7 @@ enum SourcesSubCmd {
         /// New name.
         #[arg(long)]
         name: Option<String>,
-        /// VRL transformation code.
+        /// VRL transformation code (prefix with @ to read from file, e.g. @transform.vrl).
         #[arg(long)]
         vrl: Option<String>,
         /// Live tail display pattern (e.g. "{level} {message}").
@@ -105,9 +105,19 @@ impl SourcesCmd {
                     None
                 };
 
+                let vrl_value = match vrl {
+                    Some(v) if v.starts_with('@') => {
+                        let path = &v[1..];
+                        Some(std::fs::read_to_string(path).map_err(|e| {
+                            anyhow::anyhow!("Failed to read VRL file '{path}': {e}")
+                        })?)
+                    }
+                    other => other.clone(),
+                };
+
                 let update = SourceUpdate {
                     name: name.clone(),
-                    vrl_transformation: vrl.clone(),
+                    vrl_transformation: vrl_value,
                     live_tail_pattern: live_tail_pattern.clone(),
                     logs_retention: *logs_retention,
                     metrics_retention: *metrics_retention,
