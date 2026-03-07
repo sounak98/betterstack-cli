@@ -76,10 +76,12 @@ install_completions() {
             mkdir -p "$comp_dir"
             "$INSTALL_DIR/bs" completions zsh > "$comp_dir/_bs"
             echo "Installed zsh completions to $comp_dir/_bs"
-            if ! grep -q 'fpath.*\.zfunc' "${ZDOTDIR:-$HOME}/.zshrc" 2>/dev/null; then
-                echo "Add this to your .zshrc (before compinit):"
-                echo "  fpath=(~/.zfunc \$fpath)"
+            zshrc="${ZDOTDIR:-$HOME}/.zshrc"
+            if ! grep -q 'fpath.*\.zfunc' "$zshrc" 2>/dev/null; then
+                printf '\n# bs CLI completions\nfpath=(~/.zfunc $fpath)\nautoload -Uz compinit && compinit\n' >> "$zshrc"
+                echo "Updated $zshrc with fpath and compinit"
             fi
+            echo "Restart your shell or run: source $zshrc"
             ;;
         fish)
             comp_dir="${HOME}/.config/fish/completions"
