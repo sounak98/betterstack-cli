@@ -363,9 +363,13 @@ impl IncidentsCmd {
                     incident_id,
                     content,
                 } => {
-                    let req = CreateCommentRequest {
-                        content: content.clone(),
+                    let by = resolve_by(&None, ctx).ok();
+                    let body = if let Some(email) = &by {
+                        format!("**{email}**: {content}")
+                    } else {
+                        content.clone()
                     };
+                    let req = CreateCommentRequest { content: body };
                     let comment = ctx.uptime.create_comment(incident_id, &req).await?;
                     Ok(CommandOutput::Message(format!(
                         "Comment added (ID: {}).",
