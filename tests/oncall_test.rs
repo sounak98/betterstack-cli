@@ -67,9 +67,7 @@ async fn list_oncall_events_returns_data() {
 
     Mock::given(method("GET"))
         .and(path("/api/v2/on-calls/300/events"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(load_fixture("oncall_events.json")),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(load_fixture("oncall_events.json")))
         .mount(&mock)
         .await;
 
@@ -113,10 +111,7 @@ async fn create_oncall_returns_resource() {
     let cal = client(&mock.uri()).create_oncall(&req).await.unwrap();
 
     assert_eq!(cal.id, "302");
-    assert_eq!(
-        cal.attributes.name.as_deref(),
-        Some("Weekend On-Call")
-    );
+    assert_eq!(cal.attributes.name.as_deref(), Some("Weekend On-Call"));
 }
 
 #[tokio::test]

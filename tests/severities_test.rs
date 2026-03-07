@@ -37,10 +37,7 @@ async fn list_severities_returns_data() {
     assert_eq!(severities[0].attributes.critical_alert, Some(true));
 
     assert_eq!(severities[1].id, "401");
-    assert_eq!(
-        severities[1].attributes.name.as_deref(),
-        Some("SEV4 - Low")
-    );
+    assert_eq!(severities[1].attributes.name.as_deref(), Some("SEV4 - Low"));
     assert_eq!(severities[1].attributes.sms, Some(false));
     assert_eq!(severities[1].attributes.call, Some(false));
     assert_eq!(severities[1].attributes.critical_alert, Some(false));
@@ -107,7 +104,10 @@ async fn update_severity_sends_patch() {
         push: Some(false),
         critical_alert: Some(false),
     };
-    let sev = client(&mock.uri()).update_severity("400", &req).await.unwrap();
+    let sev = client(&mock.uri())
+        .update_severity("400", &req)
+        .await
+        .unwrap();
 
     assert_eq!(sev.id, "400");
 }
@@ -132,9 +132,7 @@ async fn delete_severity_404_returns_error() {
 
     Mock::given(method("DELETE"))
         .and(path("/api/v2/urgencies/999"))
-        .respond_with(
-            ResponseTemplate::new(404).set_body_string(r#"{"errors":"Not found"}"#),
-        )
+        .respond_with(ResponseTemplate::new(404).set_body_string(r#"{"errors":"Not found"}"#))
         .mount(&mock)
         .await;
 

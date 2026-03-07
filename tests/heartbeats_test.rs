@@ -16,7 +16,9 @@ async fn list_heartbeats_returns_data() {
     Mock::given(method("GET"))
         .and(path("/api/v2/heartbeats"))
         .and(header("authorization", "Bearer test-token"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(load_fixture("heartbeats_list.json")))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(load_fixture("heartbeats_list.json")),
+        )
         .mount(&mock)
         .await;
 
@@ -24,11 +26,17 @@ async fn list_heartbeats_returns_data() {
 
     assert_eq!(heartbeats.len(), 2);
     assert_eq!(heartbeats[0].id, "100");
-    assert_eq!(heartbeats[0].attributes.name.as_deref(), Some("Nightly Backup"));
+    assert_eq!(
+        heartbeats[0].attributes.name.as_deref(),
+        Some("Nightly Backup")
+    );
     assert_eq!(heartbeats[0].attributes.period, Some(86400));
     assert_eq!(heartbeats[0].attributes.status.as_deref(), Some("up"));
     assert_eq!(heartbeats[1].id, "101");
-    assert_eq!(heartbeats[1].attributes.name.as_deref(), Some("Queue Worker"));
+    assert_eq!(
+        heartbeats[1].attributes.name.as_deref(),
+        Some("Queue Worker")
+    );
     assert_eq!(heartbeats[1].attributes.status.as_deref(), Some("down"));
 }
 

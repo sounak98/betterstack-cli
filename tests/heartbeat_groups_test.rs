@@ -26,7 +26,10 @@ async fn list_heartbeat_groups_returns_data() {
 
     assert_eq!(groups.len(), 2);
     assert_eq!(groups[0].id, "50");
-    assert_eq!(groups[0].attributes.name.as_deref(), Some("Background Jobs"));
+    assert_eq!(
+        groups[0].attributes.name.as_deref(),
+        Some("Background Jobs")
+    );
     assert_eq!(groups[0].attributes.paused, Some(false));
     assert_eq!(groups[1].id, "51");
     assert_eq!(groups[1].attributes.name.as_deref(), Some("Cron Jobs"));
@@ -50,10 +53,7 @@ async fn get_heartbeat_group_returns_single() {
     assert_eq!(group.id, "50");
     assert_eq!(group.attributes.name.as_deref(), Some("Background Jobs"));
     assert_eq!(group.attributes.paused, Some(false));
-    assert_eq!(
-        group.attributes.team_name.as_deref(),
-        Some("Engineering")
-    );
+    assert_eq!(group.attributes.team_name.as_deref(), Some("Engineering"));
 }
 
 #[tokio::test]

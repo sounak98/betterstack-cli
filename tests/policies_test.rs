@@ -16,9 +16,7 @@ async fn list_policies_returns_data() {
     Mock::given(method("GET"))
         .and(path("/api/v3/policies"))
         .and(header("authorization", "Bearer test-token"))
-        .respond_with(
-            ResponseTemplate::new(200).set_body_json(load_fixture("policies_list.json")),
-        )
+        .respond_with(ResponseTemplate::new(200).set_body_json(load_fixture("policies_list.json")))
         .mount(&mock)
         .await;
 
@@ -126,7 +124,10 @@ async fn update_policy_sends_patch() {
         repeat_delay: None,
         policy_group_id: None,
     };
-    let policy = client(&mock.uri()).update_policy("200", &req).await.unwrap();
+    let policy = client(&mock.uri())
+        .update_policy("200", &req)
+        .await
+        .unwrap();
 
     assert_eq!(policy.id, "200");
 }
