@@ -156,10 +156,7 @@ impl IncidentsCmd {
                 Ok(incident_to_detail(&incident))
             }
             IncidentsSubCmd::Ack { id, by } => {
-                let incident = ctx
-                    .uptime
-                    .acknowledge_incident(id, by.as_deref())
-                    .await?;
+                let incident = ctx.uptime.acknowledge_incident(id, by.as_deref()).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
                 let by = incident
                     .attributes
@@ -174,11 +171,7 @@ impl IncidentsCmd {
             IncidentsSubCmd::Resolve { id, by } => {
                 let incident = ctx.uptime.resolve_incident(id, by.as_deref()).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
-                let by = incident
-                    .attributes
-                    .resolved_by
-                    .as_deref()
-                    .unwrap_or("API");
+                let by = incident.attributes.resolved_by.as_deref().unwrap_or("API");
                 Ok(CommandOutput::Message(format!(
                     "Incident '{}' (ID: {}) resolved by {}.",
                     name, incident.id, by

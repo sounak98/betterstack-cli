@@ -52,11 +52,7 @@ impl HttpClient {
         parse_one(resp).await
     }
 
-    pub async fn resolve_incident(
-        &self,
-        id: &str,
-        by: Option<&str>,
-    ) -> Result<IncidentResource> {
+    pub async fn resolve_incident(&self, id: &str, by: Option<&str>) -> Result<IncidentResource> {
         let path = format!("/incidents/{id}/resolve");
         let resp = with_retry(|| async {
             let mut req = self.post_v3(&path);
