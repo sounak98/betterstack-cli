@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/sounak98/betterstack-cli/compare/v0.7.0...v0.8.0) (2026-03-07)
+
+
+### Features
+
+* add status pages, monitor groups with rich inline views (Phase 4) ([823628d](https://github.com/sounak98/betterstack-cli/commit/823628d1511fb0b4716a487807df7842998ba951))
+* status pages, monitor groups with rich inline views (Phase 4) ([#27](https://github.com/sounak98/betterstack-cli/issues/27)) ([823628d](https://github.com/sounak98/betterstack-cli/commit/823628d1511fb0b4716a487807df7842998ba951))
+
 ## [0.7.0](https://github.com/sounak98/betterstack-cli/compare/v0.6.0...v0.7.0) (2026-03-07)
 
 
