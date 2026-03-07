@@ -96,6 +96,20 @@ async fn run_init(ctx: &AppContext) -> Result<CommandOutput> {
         Some(telemetry_input)
     };
 
+    // Email (used as default --by for incidents)
+    let existing_email = existing.defaults.email.as_deref().unwrap_or("");
+    let email_label = if existing_email.is_empty() {
+        "Your email (used for incident attribution)".to_string()
+    } else {
+        format!("Your email [{}] (Enter to keep)", existing_email)
+    };
+    let email_input = prompt(&email_label)?;
+    let email = if email_input.is_empty() {
+        existing.defaults.email.clone()
+    } else {
+        Some(email_input)
+    };
+
     // Team
     let existing_team = existing.defaults.team.as_deref().unwrap_or("");
     let team_label = if existing_team.is_empty() {
@@ -199,6 +213,7 @@ async fn run_init(ctx: &AppContext) -> Result<CommandOutput> {
             sql,
         },
         defaults: DefaultsConfig {
+            email,
             team,
             output: existing.defaults.output,
         },
@@ -244,6 +259,11 @@ fn run_status(ctx: &AppContext) -> Result<CommandOutput> {
         _ => "not set".to_string(),
     };
 
+    let email = config
+        .defaults
+        .email
+        .unwrap_or_else(|| "not set".to_string());
+
     let team = config
         .defaults
         .team
@@ -255,6 +275,7 @@ fn run_status(ctx: &AppContext) -> Result<CommandOutput> {
             ("Uptime token".to_string(), uptime_status),
             ("Telemetry token".to_string(), telemetry_status),
             ("SQL connection".to_string(), sql_status),
+            ("Email".to_string(), email),
             ("Default team".to_string(), team),
         ],
     })

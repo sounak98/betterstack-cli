@@ -15,6 +15,7 @@ pub struct AppContext {
 #[allow(dead_code)]
 pub struct GlobalOptions {
     pub output_format: OutputFormat,
+    pub email: Option<String>,
     pub team: Option<String>,
     pub no_color: bool,
     pub quiet: bool,
