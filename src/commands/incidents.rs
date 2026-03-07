@@ -82,18 +82,18 @@ enum IncidentsSubCmd {
     Ack {
         /// Incident ID.
         id: String,
-        /// Email or identifier of who acknowledged (shown in timeline).
+        /// Email or identifier (defaults to config email from `bs auth init`).
         #[arg(long)]
-        by: String,
+        by: Option<String>,
     },
     /// Resolve an incident.
     #[command(arg_required_else_help = true)]
     Resolve {
         /// Incident ID.
         id: String,
-        /// Email or identifier of who resolved (shown in timeline).
+        /// Email or identifier (defaults to config email from `bs auth init`).
         #[arg(long)]
-        by: String,
+        by: Option<String>,
     },
     /// Escalate an incident.
     #[command(arg_required_else_help = true)]
@@ -238,7 +238,7 @@ impl IncidentsCmd {
                 policy,
             } => {
                 let req = CreateIncidentRequest {
-                    requester_email: by.clone(),
+                    requester_email: by.clone().or_else(|| ctx.global.email.clone()),
                     name: name.clone(),
                     summary: summary.clone(),
                     description: description.clone(),
@@ -254,7 +254,8 @@ impl IncidentsCmd {
                 Ok(incident_to_detail(&incident))
             }
             IncidentsSubCmd::Ack { id, by } => {
-                let incident = ctx.uptime.acknowledge_incident(id, Some(by)).await?;
+                let by = resolve_by(by, ctx)?;
+                let incident = ctx.uptime.acknowledge_incident(id, Some(&by)).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
                 Ok(CommandOutput::Message(format!(
                     "Incident '{}' (ID: {}) acknowledged by {by}.",
@@ -262,11 +263,12 @@ impl IncidentsCmd {
                 )))
             }
             IncidentsSubCmd::Resolve { id, by } => {
-                let incident = ctx.uptime.resolve_incident(id, Some(by)).await?;
+                let by = resolve_by(by, ctx)?;
+                let incident = ctx.uptime.resolve_incident(id, Some(&by)).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
                 Ok(CommandOutput::Message(format!(
-                    "Incident '{}' (ID: {}) resolved by {}.",
-                    name, incident.id, by
+                    "Incident '{}' (ID: {}) resolved by {by}.",
+                    name, incident.id
                 )))
             }
             IncidentsSubCmd::Escalate {
@@ -665,4 +667,15 @@ fn fmt_time(t: Option<&str>) -> String {
             .unwrap_or_else(|| ts.to_string()),
         None => "-".to_string(),
     }
+}
+
+/// Resolve the --by value: flag > config email > error.
+fn resolve_by(flag: &Option<String>, ctx: &AppContext) -> Result<String> {
+    if let Some(by) = flag {
+        return Ok(by.clone());
+    }
+    if let Some(email) = &ctx.global.email {
+        return Ok(email.clone());
+    }
+    anyhow::bail!("No --by provided and no email configured. Run `bs auth init` to set your email.")
 }

@@ -120,12 +120,15 @@ async fn main() -> Result<()> {
 
     let telemetry = resolve_telemetry_token(&config_store).map(|t| HttpClient::telemetry(&t));
 
+    let email = config_store.load().ok().and_then(|c| c.defaults.email);
+
     let ctx = AppContext {
         uptime,
         telemetry,
         config: config_store,
         global: GlobalOptions {
             output_format,
+            email,
             team: cli.team,
             no_color: cli.no_color,
             quiet: cli.quiet,

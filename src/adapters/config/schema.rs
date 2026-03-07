@@ -25,6 +25,7 @@ pub struct SqlAuthConfig {
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct DefaultsConfig {
+    pub email: Option<String>,
     pub team: Option<String>,
     pub output: Option<String>,
 }
