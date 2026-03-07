@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::{CommandFactory, Parser};
+use clap_complete::Shell;
 
 use bs_cli::adapters::config::FileConfigStore;
 use bs_cli::adapters::http::HttpClient;
@@ -48,6 +49,11 @@ enum Command {
     Sources(SourcesCmd),
     /// Update bs to the latest version.
     Upgrade,
+    /// Generate shell completions.
+    Completions {
+        /// Shell to generate completions for (bash, zsh, fish, powershell, elvish).
+        shell: Shell,
+    },
 }
 
 fn resolve_token(cli_token: Option<&str>, config_store: &FileConfigStore) -> Option<String> {
@@ -84,6 +90,11 @@ async fn main() -> Result<()> {
             return Ok(());
         }
     };
+
+    if let Command::Completions { shell } = command {
+        clap_complete::generate(shell, &mut Cli::command(), "bs", &mut std::io::stdout());
+        return Ok(());
+    }
 
     let output_format: OutputFormat = cli.output.parse()?;
     let config_store = FileConfigStore::new(FileConfigStore::default_path());
@@ -128,6 +139,7 @@ async fn main() -> Result<()> {
         Command::Monitors(cmd) => cmd.run(&ctx).await,
         Command::Sources(cmd) => cmd.run(&ctx).await,
         Command::Upgrade => bs_cli::commands::upgrade::run().await,
+        Command::Completions { .. } => unreachable!(),
     };
 
     match result {
