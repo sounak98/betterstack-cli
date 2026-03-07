@@ -1,0 +1,32 @@
+{
+  "data": {
+    "id": "300",
+    "type": "on_call_calendar",
+    "attributes": {
+      "name": "Primary On-Call",
+      "default_calendar": true,
+      "team_name": "Engineering",
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "updated_at": "2026-03-01T00:00:00.000Z"
+    },
+    "relationships": {
+      "on_call_users": {
+        "data": [
+          { "id": "10", "type": "user" }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "id": "10",
+      "type": "user",
+      "attributes": {
+        "first_name": "Alice",
+        "last_name": "Smith",
+        "email": "alice@example.com",
+        "phone_numbers": ["+1234567890"]
+      }
+    }
+  ]
+}

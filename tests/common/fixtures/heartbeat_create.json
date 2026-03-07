@@ -1,0 +1,26 @@
+{
+  "data": {
+    "id": "102",
+    "type": "heartbeat",
+    "attributes": {
+      "url": "https://uptime.betterstack.com/api/v1/heartbeat/ghi789",
+      "name": "Deploy Check",
+      "period": 600,
+      "grace": 120,
+      "call": false,
+      "sms": false,
+      "email": true,
+      "push": false,
+      "critical_alert": false,
+      "team_wait": 0,
+      "heartbeat_group_id": null,
+      "sort_index": null,
+      "status": "pending",
+      "paused_at": null,
+      "created_at": "2026-03-07T10:00:00.000Z",
+      "updated_at": "2026-03-07T10:00:00.000Z",
+      "team_name": "Engineering",
+      "policy_id": null
+    }
+  }
+}

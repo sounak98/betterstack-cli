@@ -1,0 +1,26 @@
+{
+  "data": {
+    "id": "100",
+    "type": "heartbeat",
+    "attributes": {
+      "url": "https://uptime.betterstack.com/api/v1/heartbeat/abc123",
+      "name": "Nightly Backup",
+      "period": 86400,
+      "grace": 3600,
+      "call": false,
+      "sms": false,
+      "email": true,
+      "push": false,
+      "critical_alert": false,
+      "team_wait": 0,
+      "heartbeat_group_id": null,
+      "sort_index": null,
+      "status": "up",
+      "paused_at": null,
+      "created_at": "2026-01-01T00:00:00.000Z",
+      "updated_at": "2026-03-01T12:00:00.000Z",
+      "team_name": "Engineering",
+      "policy_id": null
+    }
+  }
+}

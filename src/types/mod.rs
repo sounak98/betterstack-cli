@@ -1,9 +1,19 @@
 pub mod common;
+pub mod heartbeat;
+pub mod heartbeat_group;
 pub mod incident;
 pub mod monitor;
+pub mod oncall;
+pub mod policy;
+pub mod severity;
 pub mod source;
 
 pub use common::*;
+pub use heartbeat::*;
+pub use heartbeat_group::*;
 pub use incident::*;
 pub use monitor::*;
+pub use oncall::*;
+pub use policy::*;
+pub use severity::*;
 pub use source::*;

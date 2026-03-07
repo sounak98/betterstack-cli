@@ -4,7 +4,10 @@ use clap_complete::Shell;
 
 use bs_cli::adapters::config::FileConfigStore;
 use bs_cli::adapters::http::HttpClient;
-use bs_cli::commands::{AuthCmd, IncidentsCmd, LogsCmd, MonitorsCmd, SourcesCmd};
+use bs_cli::commands::{
+    AuthCmd, HeartbeatGroupsCmd, HeartbeatsCmd, IncidentsCmd, LogsCmd, MonitorsCmd, OnCallCmd,
+    PoliciesCmd, SeveritiesCmd, SourcesCmd,
+};
 use bs_cli::context::{AppContext, GlobalOptions, OutputFormat};
 use bs_cli::output;
 
@@ -39,12 +42,23 @@ struct Cli {
 enum Command {
     /// Manage authentication.
     Auth(AuthCmd),
+    /// Manage heartbeats.
+    Heartbeats(HeartbeatsCmd),
+    /// Manage heartbeat groups.
+    HeartbeatGroups(HeartbeatGroupsCmd),
     /// Manage incidents.
     Incidents(IncidentsCmd),
     /// Query and manage logs.
     Logs(LogsCmd),
     /// Manage uptime monitors.
     Monitors(MonitorsCmd),
+    /// Manage on-call calendars.
+    #[command(name = "oncall")]
+    OnCall(OnCallCmd),
+    /// Manage escalation policies.
+    Policies(PoliciesCmd),
+    /// Manage severities (urgency levels).
+    Severities(SeveritiesCmd),
     /// Manage log sources.
     Sources(SourcesCmd),
     /// Update bs to the latest version.
@@ -137,9 +151,14 @@ async fn main() -> Result<()> {
 
     let result = match command {
         Command::Auth(cmd) => cmd.run(&ctx).await,
+        Command::Heartbeats(cmd) => cmd.run(&ctx).await,
+        Command::HeartbeatGroups(cmd) => cmd.run(&ctx).await,
         Command::Incidents(cmd) => cmd.run(&ctx).await,
         Command::Logs(cmd) => cmd.run(&ctx).await,
         Command::Monitors(cmd) => cmd.run(&ctx).await,
+        Command::OnCall(cmd) => cmd.run(&ctx).await,
+        Command::Policies(cmd) => cmd.run(&ctx).await,
+        Command::Severities(cmd) => cmd.run(&ctx).await,
         Command::Sources(cmd) => cmd.run(&ctx).await,
         Command::Upgrade => bs_cli::commands::upgrade::run().await,
         Command::Completions { .. } => unreachable!(),

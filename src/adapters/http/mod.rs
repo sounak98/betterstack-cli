@@ -1,7 +1,12 @@
 pub mod connections;
+pub mod heartbeat_groups;
+pub mod heartbeats;
 pub mod incidents;
+pub mod oncall;
 pub mod pagination;
+pub mod policies;
 pub mod retry;
+pub mod severities;
 pub mod sql;
 pub mod telemetry;
 pub mod uptime;
@@ -69,6 +74,10 @@ impl HttpClient {
 
     pub fn patch(&self, path: &str) -> reqwest::RequestBuilder {
         self.client.patch(self.url(path)).headers(self.headers())
+    }
+
+    pub fn patch_v3(&self, path: &str) -> reqwest::RequestBuilder {
+        self.client.patch(self.url_v3(path)).headers(self.headers())
     }
 
     pub fn delete_req(&self, path: &str) -> reqwest::RequestBuilder {
