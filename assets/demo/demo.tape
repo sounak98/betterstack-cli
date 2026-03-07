@@ -9,10 +9,8 @@ Set Padding 20
 Set Framerate 30
 Set Theme "Catppuccin Mocha"
 
-Type "bs logs tail --source 2280408 --since 1m"
+Type "bs sources list"
 Enter
-Sleep 15s
-Ctrl+C
 Sleep 2s
 
 Type "bs logs tail --source 2280408 --since 1m --query 'message_json.service = auth-service'"
