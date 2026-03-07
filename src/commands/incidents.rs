@@ -284,6 +284,42 @@ impl IncidentsCmd {
                 push,
                 critical_alert,
             } => {
+                let has_channel = *call || *sms || *email || *push || *critical_alert;
+
+                match escalation_type.as_str() {
+                    "User" => {
+                        if user_email.is_none() {
+                            anyhow::bail!("--user-email is required when --type is User");
+                        }
+                    }
+                    "Team" => {
+                        if team_name.is_none() && team_id.is_none() {
+                            anyhow::bail!(
+                                "--team-name or --team-id is required when --type is Team"
+                            );
+                        }
+                    }
+                    "Schedule" => {
+                        if schedule_id.is_none() {
+                            anyhow::bail!("--schedule-id is required when --type is Schedule");
+                        }
+                    }
+                    "Policy" => {
+                        if policy_id.is_none() {
+                            anyhow::bail!("--policy-id is required when --type is Policy");
+                        }
+                    }
+                    "Organization" => {}
+                    other => {
+                        anyhow::bail!(
+                            "Invalid escalation type '{other}'. Must be one of: User, Team, Schedule, Policy, Organization"
+                        );
+                    }
+                }
+
+                // Default to email if no channel is explicitly chosen
+                let use_email = if has_channel { *email } else { true };
+
                 let req = EscalateIncidentRequest {
                     escalation_type: escalation_type.clone(),
                     user_email: user_email.clone(),
@@ -294,7 +330,7 @@ impl IncidentsCmd {
                     policy_id: policy_id.clone(),
                     call: if *call { Some(true) } else { None },
                     sms: if *sms { Some(true) } else { None },
-                    email: if *email { Some(true) } else { None },
+                    email: if use_email { Some(true) } else { None },
                     push: if *push { Some(true) } else { None },
                     critical_alert: if *critical_alert { Some(true) } else { None },
                 };
