@@ -77,6 +77,9 @@ pub fn status(s: &str) -> String {
         "started" => format!("{RED}{BOLD}{s}{RESET}"),
         "acknowledged" => format!("{YELLOW}{s}{RESET}"),
         "resolved" => format!("{GREEN}{s}{RESET}"),
+        // Status page aggregate states
+        "operational" => format!("{GREEN}{s}{RESET}"),
+        "downtime" | "degraded" | "disrupted" => format!("{RED}{BOLD}{s}{RESET}"),
         _ => s.to_string(),
     }
 }

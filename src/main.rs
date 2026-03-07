@@ -5,8 +5,8 @@ use clap_complete::Shell;
 use bs_cli::adapters::config::FileConfigStore;
 use bs_cli::adapters::http::HttpClient;
 use bs_cli::commands::{
-    AuthCmd, HeartbeatGroupsCmd, HeartbeatsCmd, IncidentsCmd, LogsCmd, MonitorsCmd, OnCallCmd,
-    PoliciesCmd, SeveritiesCmd, SourcesCmd,
+    AuthCmd, HeartbeatGroupsCmd, HeartbeatsCmd, IncidentsCmd, LogsCmd, MonitorGroupsCmd,
+    MonitorsCmd, OnCallCmd, PoliciesCmd, SeveritiesCmd, SourcesCmd, StatusPagesCmd,
 };
 use bs_cli::context::{AppContext, GlobalOptions, OutputFormat};
 use bs_cli::output;
@@ -50,6 +50,8 @@ enum Command {
     Incidents(IncidentsCmd),
     /// Query and manage logs.
     Logs(LogsCmd),
+    /// Manage monitor groups.
+    MonitorGroups(MonitorGroupsCmd),
     /// Manage uptime monitors.
     Monitors(MonitorsCmd),
     /// Manage on-call calendars.
@@ -61,6 +63,8 @@ enum Command {
     Severities(SeveritiesCmd),
     /// Manage log sources.
     Sources(SourcesCmd),
+    /// Manage status pages, sections, resources, and reports.
+    StatusPages(StatusPagesCmd),
     /// Update bs to the latest version.
     Upgrade,
     /// Generate shell completions.
@@ -155,11 +159,13 @@ async fn main() -> Result<()> {
         Command::HeartbeatGroups(cmd) => cmd.run(&ctx).await,
         Command::Incidents(cmd) => cmd.run(&ctx).await,
         Command::Logs(cmd) => cmd.run(&ctx).await,
+        Command::MonitorGroups(cmd) => cmd.run(&ctx).await,
         Command::Monitors(cmd) => cmd.run(&ctx).await,
         Command::OnCall(cmd) => cmd.run(&ctx).await,
         Command::Policies(cmd) => cmd.run(&ctx).await,
         Command::Severities(cmd) => cmd.run(&ctx).await,
         Command::Sources(cmd) => cmd.run(&ctx).await,
+        Command::StatusPages(cmd) => cmd.run(&ctx).await,
         Command::Upgrade => bs_cli::commands::upgrade::run().await,
         Command::Completions { .. } => unreachable!(),
     };

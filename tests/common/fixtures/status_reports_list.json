@@ -1,0 +1,42 @@
+{
+  "data": [
+    {
+      "id": "400",
+      "type": "status_report",
+      "attributes": {
+        "title": "Database maintenance",
+        "report_type": "maintenance",
+        "starts_at": "2026-03-10T02:00:00.000Z",
+        "ends_at": "2026-03-10T04:00:00.000Z",
+        "aggregate_state": "resolved",
+        "status_page_id": 100,
+        "affected_resources": [],
+        "created_at": "2026-03-08T00:00:00.000Z",
+        "updated_at": "2026-03-10T04:00:00.000Z"
+      }
+    },
+    {
+      "id": "401",
+      "type": "status_report",
+      "attributes": {
+        "title": "API degraded performance",
+        "report_type": "manual",
+        "starts_at": "2026-03-06T08:00:00.000Z",
+        "ends_at": null,
+        "aggregate_state": "degraded",
+        "status_page_id": 100,
+        "affected_resources": [
+          {"status_page_resource_id": "301", "status": "degraded"}
+        ],
+        "created_at": "2026-03-06T08:00:00.000Z",
+        "updated_at": "2026-03-06T10:00:00.000Z"
+      }
+    }
+  ],
+  "pagination": {
+    "first": "https://uptime.betterstack.com/api/v2/status-pages/100/status-reports?page=1",
+    "last": "https://uptime.betterstack.com/api/v2/status-pages/100/status-reports?page=1",
+    "prev": null,
+    "next": null
+  }
+}

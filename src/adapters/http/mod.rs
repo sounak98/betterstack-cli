@@ -2,12 +2,14 @@ pub mod connections;
 pub mod heartbeat_groups;
 pub mod heartbeats;
 pub mod incidents;
+pub mod monitor_groups;
 pub mod oncall;
 pub mod pagination;
 pub mod policies;
 pub mod retry;
 pub mod severities;
 pub mod sql;
+pub mod status_pages;
 pub mod telemetry;
 pub mod uptime;
 

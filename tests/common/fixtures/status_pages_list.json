@@ -1,0 +1,48 @@
+{
+  "data": [
+    {
+      "id": "100",
+      "type": "status_page",
+      "attributes": {
+        "company_name": "Acme Corp",
+        "company_url": "https://acme.com",
+        "subdomain": "acme",
+        "custom_domain": null,
+        "timezone": "UTC",
+        "theme": "light",
+        "layout": "horizontal",
+        "aggregate_state": "operational",
+        "password_enabled": false,
+        "subscribable": true,
+        "created_at": "2026-01-15T00:00:00.000Z",
+        "updated_at": "2026-03-05T10:00:00.000Z",
+        "team_name": "Engineering"
+      }
+    },
+    {
+      "id": "101",
+      "type": "status_page",
+      "attributes": {
+        "company_name": "Acme Internal",
+        "company_url": null,
+        "subdomain": "acme-internal",
+        "custom_domain": "status.internal.acme.com",
+        "timezone": "America/New_York",
+        "theme": "dark",
+        "layout": "vertical",
+        "aggregate_state": "downtime",
+        "password_enabled": true,
+        "subscribable": false,
+        "created_at": "2026-02-01T00:00:00.000Z",
+        "updated_at": "2026-03-06T08:00:00.000Z",
+        "team_name": null
+      }
+    }
+  ],
+  "pagination": {
+    "first": "https://uptime.betterstack.com/api/v2/status-pages?page=1",
+    "last": "https://uptime.betterstack.com/api/v2/status-pages?page=1",
+    "prev": null,
+    "next": null
+  }
+}

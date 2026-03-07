@@ -1,0 +1,19 @@
+{
+  "data": {
+    "id": "401",
+    "type": "status_report",
+    "attributes": {
+      "title": "API degraded performance",
+      "report_type": "manual",
+      "starts_at": "2026-03-06T08:00:00.000Z",
+      "ends_at": null,
+      "aggregate_state": "degraded",
+      "status_page_id": 100,
+      "affected_resources": [
+        {"status_page_resource_id": "301", "status": "degraded"}
+      ],
+      "created_at": "2026-03-06T08:00:00.000Z",
+      "updated_at": "2026-03-06T10:00:00.000Z"
+    }
+  }
+}
