@@ -64,11 +64,32 @@ Get your API tokens at [betterstack.com/settings/api-tokens](https://betterstack
 
 ## Usage
 
+### Sources
+
+```sh
+bs sources list                                      # List all log sources
+bs sources get 12345                                 # Get source details + token
+bs sources update 12345 --name "Production API"      # Rename a source
+bs sources update 12345 --vrl @transform.vrl         # Apply VRL transform from file
+bs sources update 12345 --pause                      # Pause ingestion
+```
+
+VRL transformations can be managed as files, version-controlled alongside your infra:
+
+```sh
+# transform.vrl
+.level = .message_json.level
+.message = .message_json.message
+
+bs sources update 12345 --vrl @transform.vrl
+```
+
 ### Logs
 
 ```sh
 bs logs tail --source 12345                          # Live tail (like kubectl logs -f)
 bs logs tail --source 12345 --query 'level = ERROR'  # Tail with filter
+bs logs tail --source 12345 --since 30m              # Backfill last 30 minutes, then tail
 bs logs tail --source 12345 -o json | jq '.message'  # Pipe to jq
 bs logs query 'level = ERROR AND status >= 500' --source 12345 --since 1h
 ```

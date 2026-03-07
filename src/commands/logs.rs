@@ -4,7 +4,6 @@ use crate::adapters::config::schema::SqlAuthConfig;
 use crate::adapters::http::sql::SqlClient;
 use crate::context::AppContext;
 use crate::output::CommandOutput;
-use crate::types::SourceResource;
 
 #[derive(clap::Args)]
 pub struct LogsCmd {
@@ -14,14 +13,6 @@ pub struct LogsCmd {
 
 #[derive(clap::Subcommand)]
 enum LogsSubCmd {
-    /// List log sources.
-    Sources,
-    /// Get details of a specific source.
-    #[command(arg_required_else_help = true)]
-    Source {
-        /// Source ID.
-        id: String,
-    },
     /// Run a raw ClickHouse SQL query.
     #[command(arg_required_else_help = true)]
     Sql {
@@ -86,24 +77,6 @@ impl LogsCmd {
             }
         };
         match cmd {
-            LogsSubCmd::Sources => {
-                let telemetry = ctx.telemetry.as_ref().ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "No Telemetry API token configured. Run `bs auth init` to set one up."
-                    )
-                })?;
-                let sources = telemetry.list_sources().await?;
-                Ok(sources_to_table(sources))
-            }
-            LogsSubCmd::Source { id } => {
-                let telemetry = ctx.telemetry.as_ref().ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "No Telemetry API token configured. Run `bs auth init` to set one up."
-                    )
-                })?;
-                let source = telemetry.get_source(id).await?;
-                Ok(source_to_detail(&source))
-            }
             LogsSubCmd::Sql { query, limit } => {
                 let sql_client = build_sql_client(ctx).await?;
                 let upper = query.trim_start().to_uppercase();
@@ -274,84 +247,6 @@ async fn build_sql_client(ctx: &AppContext) -> Result<SqlClient> {
     eprintln!("SQL credentials saved.\n");
 
     Ok(SqlClient::new(&host, &username, &password))
-}
-
-fn sources_to_table(sources: Vec<SourceResource>) -> CommandOutput {
-    let headers = vec![
-        "ID".to_string(),
-        "Name".to_string(),
-        "Platform".to_string(),
-        "Table".to_string(),
-        "Ingesting".to_string(),
-        "Created".to_string(),
-    ];
-
-    let rows: Vec<Vec<String>> = sources
-        .iter()
-        .map(|s| {
-            let a = &s.attributes;
-            vec![
-                s.id.clone(),
-                a.name.clone().unwrap_or_else(|| "-".to_string()),
-                a.platform.clone().unwrap_or_else(|| "-".to_string()),
-                a.table_name.clone().unwrap_or_else(|| "-".to_string()),
-                a.ingesting_paused
-                    .map(|p| if p { "paused" } else { "active" }.to_string())
-                    .unwrap_or_else(|| "-".to_string()),
-                a.created_at
-                    .as_deref()
-                    .and_then(|s| s.split('T').next())
-                    .unwrap_or("-")
-                    .to_string(),
-            ]
-        })
-        .collect();
-
-    CommandOutput::Table { headers, rows }
-}
-
-fn source_to_detail(s: &SourceResource) -> CommandOutput {
-    let a = &s.attributes;
-    let fields = vec![
-        ("ID".to_string(), s.id.clone()),
-        (
-            "Name".to_string(),
-            a.name.clone().unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Platform".to_string(),
-            a.platform.clone().unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Table".to_string(),
-            a.table_name.clone().unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Token".to_string(),
-            a.token.clone().unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Ingesting".to_string(),
-            a.ingesting_paused
-                .map(|p| if p { "paused" } else { "active" }.to_string())
-                .unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Retention".to_string(),
-            a.retention
-                .map(|r| format!("{r} days"))
-                .unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Live Tail URL".to_string(),
-            a.live_tail_url.clone().unwrap_or_else(|| "-".to_string()),
-        ),
-        (
-            "Created".to_string(),
-            a.created_at.clone().unwrap_or_else(|| "-".to_string()),
-        ),
-    ];
-    CommandOutput::Detail { fields }
 }
 
 /// Generic table output for arbitrary SQL result rows (used by `bs logs sql`).
