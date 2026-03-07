@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/sounak98/betterstack-cli/compare/v0.5.1...v0.6.0) (2026-03-07)
+
+
+### Features
+
+* complete incidents with comments, timeline, and full API parity ([#24](https://github.com/sounak98/betterstack-cli/issues/24)) ([3bc6516](https://github.com/sounak98/betterstack-cli/commit/3bc6516b8de89b031c4ef687eee00c9016fc07a6))
+* pretty-print API errors and add --by to incident ack/resolve ([#21](https://github.com/sounak98/betterstack-cli/issues/21)) ([8f6096a](https://github.com/sounak98/betterstack-cli/commit/8f6096ad5fcd06f449ae62618066a593721a9611))
+
+
+### Bug Fixes
+
+* send required escalation_type in escalate incident request ([#22](https://github.com/sounak98/betterstack-cli/issues/22)) ([6f71b8d](https://github.com/sounak98/betterstack-cli/commit/6f71b8d5bf02994d456d211ce4c4d526a9efef25))
+
 ## [0.5.1](https://github.com/sounak98/betterstack-cli/compare/v0.5.0...v0.5.1) (2026-03-07)
 
 
