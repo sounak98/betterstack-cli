@@ -3,7 +3,7 @@ use clap::{CommandFactory, Parser};
 
 use bs_cli::adapters::config::FileConfigStore;
 use bs_cli::adapters::http::HttpClient;
-use bs_cli::commands::{AuthCmd, IncidentsCmd, LogsCmd, MonitorsCmd};
+use bs_cli::commands::{AuthCmd, IncidentsCmd, LogsCmd, MonitorsCmd, SourcesCmd};
 use bs_cli::context::{AppContext, GlobalOptions, OutputFormat};
 use bs_cli::output;
 
@@ -44,6 +44,8 @@ enum Command {
     Logs(LogsCmd),
     /// Manage uptime monitors.
     Monitors(MonitorsCmd),
+    /// Manage log sources.
+    Sources(SourcesCmd),
     /// Update bs to the latest version.
     Upgrade,
 }
@@ -91,7 +93,7 @@ async fn main() -> Result<()> {
     // Auth and upgrade commands don't require a token
     let needs_token = !matches!(
         command,
-        Command::Auth(_) | Command::Upgrade | Command::Logs(_)
+        Command::Auth(_) | Command::Upgrade | Command::Logs(_) | Command::Sources(_)
     );
 
     let uptime = if needs_token {
@@ -124,6 +126,7 @@ async fn main() -> Result<()> {
         Command::Incidents(cmd) => cmd.run(&ctx).await,
         Command::Logs(cmd) => cmd.run(&ctx).await,
         Command::Monitors(cmd) => cmd.run(&ctx).await,
+        Command::Sources(cmd) => cmd.run(&ctx).await,
         Command::Upgrade => bs_cli::commands::upgrade::run().await,
     };
 
