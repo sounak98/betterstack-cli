@@ -62,6 +62,31 @@ pub struct CreateIncidentRequest {
     pub push: Option<bool>,
 }
 
+#[derive(Debug, Clone, Serialize)]
+pub struct EscalateIncidentRequest {
+    pub escalation_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub team_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub team_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schedule_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub call: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sms: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub push: Option<bool>,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[allow(dead_code)]
 pub struct TimelineEvent {

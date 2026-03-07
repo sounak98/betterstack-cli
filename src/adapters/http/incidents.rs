@@ -2,7 +2,10 @@ use anyhow::Result;
 
 use super::retry::with_retry;
 use super::{HttpClient, check_status, parse_one};
-use crate::types::{CreateIncidentRequest, IncidentFilters, IncidentResource, TimelineEvent};
+use crate::types::{
+    CreateIncidentRequest, EscalateIncidentRequest, IncidentFilters, IncidentResource,
+    TimelineEvent,
+};
 
 impl HttpClient {
     pub async fn list_incidents(&self, filters: &IncidentFilters) -> Result<Vec<IncidentResource>> {
@@ -65,9 +68,14 @@ impl HttpClient {
         parse_one(resp).await
     }
 
-    pub async fn escalate_incident(&self, id: &str) -> Result<IncidentResource> {
+    pub async fn escalate_incident(
+        &self,
+        id: &str,
+        req: &EscalateIncidentRequest,
+    ) -> Result<IncidentResource> {
         let path = format!("/incidents/{id}/escalate");
-        let resp = with_retry(|| async { Ok(self.post_v3(&path).send().await?) }).await?;
+        let resp =
+            with_retry(|| async { Ok(self.post_v3(&path).json(req).send().await?) }).await?;
         parse_one(resp).await
     }
 

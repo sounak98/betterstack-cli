@@ -2,7 +2,10 @@ use anyhow::Result;
 
 use crate::context::AppContext;
 use crate::output::CommandOutput;
-use crate::types::{CreateIncidentRequest, IncidentFilters, IncidentResource, TimelineEvent};
+use crate::types::{
+    CreateIncidentRequest, EscalateIncidentRequest, IncidentFilters, IncidentResource,
+    TimelineEvent,
+};
 
 #[derive(clap::Args)]
 pub struct IncidentsCmd {
@@ -81,6 +84,39 @@ enum IncidentsSubCmd {
     Escalate {
         /// Incident ID.
         id: String,
+        /// Escalation target type: User, Team, Schedule, Policy, or Organization.
+        #[arg(long = "type", value_name = "TYPE")]
+        escalation_type: String,
+        /// User email (when --type User).
+        #[arg(long)]
+        user_email: Option<String>,
+        /// User ID (when --type User).
+        #[arg(long)]
+        user_id: Option<String>,
+        /// Team name (when --type Team).
+        #[arg(long)]
+        team_name: Option<String>,
+        /// Team ID (when --type Team).
+        #[arg(long)]
+        team_id: Option<String>,
+        /// Schedule ID (when --type Schedule).
+        #[arg(long)]
+        schedule_id: Option<String>,
+        /// Escalation policy ID (when --type Policy).
+        #[arg(long)]
+        policy_id: Option<String>,
+        /// Send call alerts.
+        #[arg(long)]
+        call: bool,
+        /// Send SMS alerts.
+        #[arg(long)]
+        sms: bool,
+        /// Send email alerts.
+        #[arg(long)]
+        email: bool,
+        /// Send push notifications.
+        #[arg(long)]
+        push: bool,
     },
     /// Delete an incident.
     #[command(arg_required_else_help = true)]
@@ -177,8 +213,34 @@ impl IncidentsCmd {
                     name, incident.id, by
                 )))
             }
-            IncidentsSubCmd::Escalate { id } => {
-                let incident = ctx.uptime.escalate_incident(id).await?;
+            IncidentsSubCmd::Escalate {
+                id,
+                escalation_type,
+                user_email,
+                user_id,
+                team_name,
+                team_id,
+                schedule_id,
+                policy_id,
+                call,
+                sms,
+                email,
+                push,
+            } => {
+                let req = EscalateIncidentRequest {
+                    escalation_type: escalation_type.clone(),
+                    user_email: user_email.clone(),
+                    user_id: user_id.clone(),
+                    team_name: team_name.clone(),
+                    team_id: team_id.clone(),
+                    schedule_id: schedule_id.clone(),
+                    policy_id: policy_id.clone(),
+                    call: if *call { Some(true) } else { None },
+                    sms: if *sms { Some(true) } else { None },
+                    email: if *email { Some(true) } else { None },
+                    push: if *push { Some(true) } else { None },
+                };
+                let incident = ctx.uptime.escalate_incident(id, &req).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
                 Ok(CommandOutput::Message(format!(
                     "Incident '{}' (ID: {}) escalated.",
