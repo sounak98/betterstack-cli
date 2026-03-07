@@ -49,7 +49,11 @@ impl SqlClient {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            bail!("SQL query error ({}): {}", status, body);
+            bail!(
+                "SQL query error ({}):\n{}",
+                status,
+                super::format_error_body(&body)
+            );
         }
 
         resp.text().await.context("Failed to read SQL response")

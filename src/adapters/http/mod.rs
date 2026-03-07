@@ -86,12 +86,21 @@ impl HttpClient {
     }
 }
 
+/// Format an API error body, pretty-printing JSON if possible.
+pub(super) fn format_error_body(body: &str) -> String {
+    if let Ok(json) = serde_json::from_str::<serde_json::Value>(body) {
+        serde_json::to_string_pretty(&json).unwrap_or_else(|_| body.to_string())
+    } else {
+        body.to_string()
+    }
+}
+
 /// Parse a single-resource response, or return an API error.
 pub async fn parse_one<T: serde::de::DeserializeOwned>(resp: reqwest::Response) -> Result<T> {
     let status = resp.status();
     if !status.is_success() {
         let body = resp.text().await.unwrap_or_default();
-        bail!("API error ({}): {}", status, body);
+        bail!("API error ({}):\n{}", status, format_error_body(&body));
     }
     let single: SingleResponse<T> = resp.json().await.context("Failed to parse response")?;
     Ok(single.data)
@@ -102,7 +111,7 @@ pub async fn check_status(resp: reqwest::Response) -> Result<()> {
     if !resp.status().is_success() {
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        bail!("API error ({}): {}", status, body);
+        bail!("API error ({}):\n{}", status, format_error_body(&body));
     }
     Ok(())
 }

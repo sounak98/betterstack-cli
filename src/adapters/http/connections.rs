@@ -39,7 +39,11 @@ impl HttpClient {
         let status = resp.status();
         if !status.is_success() {
             let body = resp.text().await.unwrap_or_default();
-            bail!("Failed to create SQL connection ({}): {}", status, body);
+            bail!(
+                "Failed to create SQL connection ({}):\n{}",
+                status,
+                super::format_error_body(&body)
+            );
         }
 
         let parsed: ConnectionResponse = resp.json().await?;

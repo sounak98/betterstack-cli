@@ -56,7 +56,11 @@ impl HttpClient {
             let status = resp.status();
             if !status.is_success() {
                 let body = resp.text().await.unwrap_or_default();
-                bail!("API error ({}): {}", status, body);
+                bail!(
+                    "API error ({}):\n{}",
+                    status,
+                    super::format_error_body(&body)
+                );
             }
 
             let page: PaginatedResponse<T> = resp
