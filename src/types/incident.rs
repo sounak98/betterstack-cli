@@ -22,22 +22,27 @@ pub struct IncidentAttributes {
     pub acknowledged_by: Option<String>,
     pub resolved_at: Option<String>,
     pub resolved_by: Option<String>,
+    pub status: Option<String>,
+    pub team_name: Option<String>,
     pub response_content: Option<String>,
     pub response_options: Option<String>,
     pub regions: Option<Vec<String>>,
     pub response_url: Option<String>,
     pub screenshot_url: Option<String>,
+    pub origin_url: Option<String>,
     pub escalation_policy_id: Option<serde_json::Value>,
     pub call: Option<bool>,
     pub sms: Option<bool>,
     pub email: Option<bool>,
     pub push: Option<bool>,
+    pub metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct IncidentFilters {
     pub status: Option<String>,
     pub monitor_id: Option<String>,
+    pub heartbeat_id: Option<String>,
     pub from: Option<String>,
     pub to: Option<String>,
 }
@@ -60,6 +65,12 @@ pub struct CreateIncidentRequest {
     pub email: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub critical_alert: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub team_wait: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -85,6 +96,8 @@ pub struct EscalateIncidentRequest {
     pub email: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub push: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub critical_alert: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -99,8 +112,38 @@ pub struct TimelineEvent {
 #[derive(Debug, Clone, Deserialize)]
 #[allow(dead_code)]
 pub struct TimelineEventAttributes {
-    pub event_type: Option<String>,
-    pub started_at: Option<String>,
-    pub duration: Option<f64>,
-    pub regions: Option<Vec<String>>,
+    pub item_type: Option<String>,
+    pub at: Option<String>,
+    pub data: Option<TimelineEventData>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct TimelineEventData {
+    pub title: Option<serde_json::Value>,
+    pub content: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct CommentResource {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub resource_type: Option<String>,
+    pub attributes: CommentAttributes,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
+pub struct CommentAttributes {
+    pub content: Option<String>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub user_id: Option<serde_json::Value>,
+    pub user_email: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct CreateCommentRequest {
+    pub content: String,
 }

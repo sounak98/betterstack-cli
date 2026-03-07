@@ -3,8 +3,8 @@ use anyhow::Result;
 use super::retry::with_retry;
 use super::{HttpClient, check_status, parse_one};
 use crate::types::{
-    CreateIncidentRequest, EscalateIncidentRequest, IncidentFilters, IncidentResource,
-    TimelineEvent,
+    CommentResource, CreateCommentRequest, CreateIncidentRequest, EscalateIncidentRequest,
+    IncidentFilters, IncidentResource, TimelineEvent,
 };
 
 impl HttpClient {
@@ -15,6 +15,9 @@ impl HttpClient {
         }
         if let Some(ref monitor_id) = filters.monitor_id {
             params.push(("monitor_id", monitor_id.as_str()));
+        }
+        if let Some(ref heartbeat_id) = filters.heartbeat_id {
+            params.push(("heartbeat_id", heartbeat_id.as_str()));
         }
         if let Some(ref from) = filters.from {
             params.push(("from", from.as_str()));
@@ -87,5 +90,27 @@ impl HttpClient {
     pub async fn incident_timeline(&self, id: &str) -> Result<Vec<TimelineEvent>> {
         let path = format!("/incidents/{id}/timeline");
         self.paginate_all_v3(&path, &[]).await
+    }
+
+    pub async fn list_comments(&self, incident_id: &str) -> Result<Vec<CommentResource>> {
+        // Comments use v2 API (not v3)
+        let path = format!("/incidents/{incident_id}/comments");
+        self.paginate_all(&path, &[]).await
+    }
+
+    pub async fn create_comment(
+        &self,
+        incident_id: &str,
+        req: &CreateCommentRequest,
+    ) -> Result<CommentResource> {
+        let path = format!("/incidents/{incident_id}/comments");
+        let resp = with_retry(|| async { Ok(self.post(&path).json(req).send().await?) }).await?;
+        parse_one(resp).await
+    }
+
+    pub async fn delete_comment(&self, incident_id: &str, comment_id: &str) -> Result<()> {
+        let path = format!("/incidents/{incident_id}/comments/{comment_id}");
+        let resp = with_retry(|| async { Ok(self.delete_req(&path).send().await?) }).await?;
+        check_status(resp).await
     }
 }
