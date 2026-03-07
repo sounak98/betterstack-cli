@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/sounak98/betterstack-cli/compare/v0.4.0...v0.5.0) (2026-03-07)
+
+
+### Features
+
+* add `bs sources` top-level subcommand ([#15](https://github.com/sounak98/betterstack-cli/issues/15)) ([6b4f489](https://github.com/sounak98/betterstack-cli/commit/6b4f489751f5bb4ee5b2457505d6c47c1e800d14))
+* add shell completions subcommand ([#16](https://github.com/sounak98/betterstack-cli/issues/16)) ([926f59f](https://github.com/sounak98/betterstack-cli/commit/926f59fc96d8174851a3d4e19f14040016881ab8))
+
 ## [0.4.0](https://github.com/sounak98/betterstack-cli/compare/v0.3.0...v0.4.0) (2026-03-06)
 
 
