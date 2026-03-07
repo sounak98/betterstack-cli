@@ -35,7 +35,10 @@ impl HttpClient {
             Ok(())
         } else {
             let body = resp.text().await.unwrap_or_default();
-            anyhow::bail!("Delete failed ({status}): {body}");
+            anyhow::bail!(
+                "Delete failed ({status}):\n{}",
+                super::format_error_body(&body)
+            );
         }
     }
 }

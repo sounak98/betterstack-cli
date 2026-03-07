@@ -63,12 +63,18 @@ enum IncidentsSubCmd {
     Ack {
         /// Incident ID.
         id: String,
+        /// Email or identifier of who acknowledged (shown in timeline).
+        #[arg(long)]
+        by: Option<String>,
     },
     /// Resolve an incident.
     #[command(arg_required_else_help = true)]
     Resolve {
         /// Incident ID.
         id: String,
+        /// Email or identifier of who resolved (shown in timeline).
+        #[arg(long)]
+        by: Option<String>,
     },
     /// Escalate an incident.
     #[command(arg_required_else_help = true)]
@@ -149,20 +155,26 @@ impl IncidentsCmd {
                 let incident = ctx.uptime.create_incident(&req).await?;
                 Ok(incident_to_detail(&incident))
             }
-            IncidentsSubCmd::Ack { id } => {
-                let incident = ctx.uptime.acknowledge_incident(id).await?;
+            IncidentsSubCmd::Ack { id, by } => {
+                let incident = ctx.uptime.acknowledge_incident(id, by.as_deref()).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
+                let by = incident
+                    .attributes
+                    .acknowledged_by
+                    .as_deref()
+                    .unwrap_or("API");
                 Ok(CommandOutput::Message(format!(
-                    "Incident '{}' (ID: {}) acknowledged.",
-                    name, incident.id
+                    "Incident '{}' (ID: {}) acknowledged by {}.",
+                    name, incident.id, by
                 )))
             }
-            IncidentsSubCmd::Resolve { id } => {
-                let incident = ctx.uptime.resolve_incident(id).await?;
+            IncidentsSubCmd::Resolve { id, by } => {
+                let incident = ctx.uptime.resolve_incident(id, by.as_deref()).await?;
                 let name = incident.attributes.name.as_deref().unwrap_or("Unknown");
+                let by = incident.attributes.resolved_by.as_deref().unwrap_or("API");
                 Ok(CommandOutput::Message(format!(
-                    "Incident '{}' (ID: {}) resolved.",
-                    name, incident.id
+                    "Incident '{}' (ID: {}) resolved by {}.",
+                    name, incident.id, by
                 )))
             }
             IncidentsSubCmd::Escalate { id } => {

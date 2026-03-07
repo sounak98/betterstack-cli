@@ -35,15 +35,33 @@ impl HttpClient {
         parse_one(resp).await
     }
 
-    pub async fn acknowledge_incident(&self, id: &str) -> Result<IncidentResource> {
+    pub async fn acknowledge_incident(
+        &self,
+        id: &str,
+        by: Option<&str>,
+    ) -> Result<IncidentResource> {
         let path = format!("/incidents/{id}/acknowledge");
-        let resp = with_retry(|| async { Ok(self.post_v3(&path).send().await?) }).await?;
+        let resp = with_retry(|| async {
+            let mut req = self.post_v3(&path);
+            if let Some(email) = by {
+                req = req.json(&serde_json::json!({ "acknowledged_by": email }));
+            }
+            Ok(req.send().await?)
+        })
+        .await?;
         parse_one(resp).await
     }
 
-    pub async fn resolve_incident(&self, id: &str) -> Result<IncidentResource> {
+    pub async fn resolve_incident(&self, id: &str, by: Option<&str>) -> Result<IncidentResource> {
         let path = format!("/incidents/{id}/resolve");
-        let resp = with_retry(|| async { Ok(self.post_v3(&path).send().await?) }).await?;
+        let resp = with_retry(|| async {
+            let mut req = self.post_v3(&path);
+            if let Some(email) = by {
+                req = req.json(&serde_json::json!({ "resolved_by": email }));
+            }
+            Ok(req.send().await?)
+        })
+        .await?;
         parse_one(resp).await
     }
 
