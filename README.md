@@ -105,12 +105,102 @@ bs monitors get 12345                   # Get monitor details
 bs monitors create --url https://example.com --name "My Site"
 ```
 
+### Monitor Groups
+
+```sh
+bs monitor-groups list                              # List all groups
+bs monitor-groups create --name "Production"        # Create a group
+bs monitor-groups update 123 --name "Staging"       # Rename
+bs monitor-groups delete 123
+```
+
 ### Incidents
 
 ```sh
 bs incidents list --status started
+bs incidents get 12345                  # Shows inline timeline + comments
 bs incidents ack 12345
 bs incidents resolve 12345
+bs incidents timeline 12345             # Full colored timeline
+bs incidents comments add 12345 --content "Investigating"
+```
+
+### Heartbeats
+
+```sh
+bs heartbeats list                                  # List all heartbeats
+bs heartbeats list --status down                    # Filter by status
+bs heartbeats create --name "Nightly backup" --period 86400 --grace 3600
+bs heartbeats pause 12345                           # Pause monitoring
+bs heartbeats resume 12345                          # Resume monitoring
+```
+
+### Heartbeat Groups
+
+```sh
+bs heartbeat-groups list
+bs heartbeat-groups create --name "Background Jobs"
+```
+
+### On-Call Calendars
+
+```sh
+bs oncall list                                      # List calendars
+bs oncall who                                       # Who's on call right now
+bs oncall get 12345                                 # Calendar details + on-call users
+bs oncall events 12345                              # List calendar events
+```
+
+### Escalation Policies
+
+```sh
+bs policies list
+bs policies get 12345                               # Shows policy steps
+bs policies create --name "Critical" --steps '[{"step_members":[{"type":"current_on_call"}],"wait_before_escalation":300}]'
+```
+
+### Severities
+
+```sh
+bs severities list
+bs severities create --name "Critical" --sms --call # Email on by default
+bs severities update 12345 --no-email --sms         # Toggle notifications
+```
+
+### Status Pages
+
+```sh
+bs status-pages list
+bs status-pages create --name "Acme Status" --subdomain acme --timezone UTC
+bs status-pages get 12345                           # Shows inline sections + resources
+```
+
+**Sections:**
+
+```sh
+bs status-pages sections list 12345
+bs status-pages sections create 12345 --name "Core Services" --position 0
+```
+
+**Resources (add monitors to the page):**
+
+```sh
+bs status-pages resources create 12345 --resource-id 67890 --public-name "Website"
+bs status-pages resources list 12345                # Shows status + availability
+```
+
+**Reports (incidents/maintenance on status page):**
+
+```sh
+bs status-pages reports create 12345 \
+  --title "API degraded" \
+  --message "Investigating increased latency." \
+  --affected '[{"status_page_resource_id":"67890","status":"degraded"}]'
+
+bs status-pages reports get 12345 843181            # Shows inline update timeline
+bs status-pages reports add-update 12345 843181 \
+  --message "Fix deployed." --notify                # Auto-carries affected resources
+bs status-pages reports list 12345
 ```
 
 ### Output formats
@@ -120,6 +210,78 @@ Every command supports `-o json` for piping to `jq`, AI tools, or scripts:
 ```sh
 bs monitors list -o json | jq '.[] | select(.Status == "down")'
 bs logs tail --source 12345 -o json | jq '.level, .message'
+```
+
+## Examples
+
+**Incident response from the terminal:**
+
+```sh
+# See what's firing
+bs incidents list --status started
+
+# Get the full picture: timeline, comments, who's been notified
+bs incidents get 12345
+
+# Acknowledge and leave a note
+bs incidents ack 12345
+bs incidents comments add 12345 --content "Looking into this, appears to be a Redis connection issue"
+
+# Escalate to the on-call team if needed
+bs incidents escalate 12345 --type Schedule --schedule-id 67890 --call --sms
+
+# Resolve when done
+bs incidents resolve 12345
+```
+
+**Post a status page incident in one pipeline:**
+
+```sh
+# Create the incident report with an initial message
+bs status-pages reports create 12345 \
+  --title "Payment processing degraded" \
+  --message "We are investigating reports of failed payments." \
+  --affected '[{"status_page_resource_id":"67890","status":"degraded"}]'
+
+# Post updates as you learn more (affected resources auto-carried)
+bs status-pages reports add-update 12345 843181 \
+  --message "Root cause identified: third-party payment gateway timeout."
+
+# Resolve by setting the end time
+bs status-pages reports update 12345 843181 --ends-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+```
+
+**Pipe into other tools:**
+
+```sh
+# Get all down monitors as a Slack-friendly list
+bs monitors list --status down -o json | jq -r '.[] | "- \(.Name) (\(.URL))"'
+
+# Count errors per source in the last hour
+bs logs query 'level = ERROR' --since 1h -o json | jq 'group_by(.source) | map({source: .[0].source, count: length})'
+
+# Export incidents to CSV for a post-mortem spreadsheet
+bs incidents list --from 2026-03-01 --to 2026-03-07 -o csv > incidents.csv
+
+# Find heartbeats that haven't checked in
+bs heartbeats list --status down -o json | jq '.[].Name'
+```
+
+**CI/CD integration:**
+
+```sh
+# Pause monitors during deployment
+bs monitors update 12345 --pause
+deploy-my-app
+bs monitors update 12345 --resume
+
+# Create a maintenance window on your status page
+bs status-pages reports create 12345 \
+  --title "Scheduled deployment" \
+  --report-type maintenance \
+  --message "Deploying v2.4.0, brief downtime expected." \
+  --starts-at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --ends-at "$(date -u -d '+30 minutes' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v+30M +%Y-%m-%dT%H:%M:%SZ)"
 ```
 
 ## Configuration
