@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/sounak98/betterstack-cli/compare/v0.6.0...v0.7.0) (2026-03-07)
+
+
+### Features
+
+* add heartbeats, on-call, policies, and severities (Phase 3) ([#25](https://github.com/sounak98/betterstack-cli/issues/25)) ([119293b](https://github.com/sounak98/betterstack-cli/commit/119293b5df22b70356f839489632d9138c7c2afa))
+
 ## [0.6.0](https://github.com/sounak98/betterstack-cli/compare/v0.5.1...v0.6.0) (2026-03-07)
 
 
