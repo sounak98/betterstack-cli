@@ -2,14 +2,14 @@ use anyhow::Result;
 use clap::{CommandFactory, Parser};
 use clap_complete::Shell;
 
-use bs_cli::adapters::config::FileConfigStore;
-use bs_cli::adapters::http::HttpClient;
-use bs_cli::commands::{
+use betterstack_cli::adapters::config::FileConfigStore;
+use betterstack_cli::adapters::http::HttpClient;
+use betterstack_cli::commands::{
     AuthCmd, HeartbeatGroupsCmd, HeartbeatsCmd, IncidentsCmd, LogsCmd, MonitorGroupsCmd,
     MonitorsCmd, OnCallCmd, PoliciesCmd, SeveritiesCmd, SourcesCmd, StatusPagesCmd,
 };
-use bs_cli::context::{AppContext, GlobalOptions, OutputFormat};
-use bs_cli::output;
+use betterstack_cli::context::{AppContext, GlobalOptions, OutputFormat};
+use betterstack_cli::output;
 
 #[derive(Parser)]
 #[command(name = "bs", version, about = "Fast, AI-friendly CLI for Better Stack")]
@@ -166,7 +166,7 @@ async fn main() -> Result<()> {
         Command::Severities(cmd) => cmd.run(&ctx).await,
         Command::Sources(cmd) => cmd.run(&ctx).await,
         Command::StatusPages(cmd) => cmd.run(&ctx).await,
-        Command::Upgrade => bs_cli::commands::upgrade::run().await,
+        Command::Upgrade => betterstack_cli::commands::upgrade::run().await,
         Command::Completions { .. } => unreachable!(),
     };
 

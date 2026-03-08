@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/sounak98/betterstack-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/sounak98/betterstack-cli/actions/workflows/ci.yml)
 [![Release](https://github.com/sounak98/betterstack-cli/actions/workflows/release.yml/badge.svg)](https://github.com/sounak98/betterstack-cli/releases)
-[![crates.io](https://img.shields.io/crates/v/bs-cli.svg)](https://crates.io/crates/bs-cli)
+[![crates.io](https://img.shields.io/crates/v/betterstack-cli.svg)](https://crates.io/crates/betterstack-cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Fast, AI-friendly CLI for [Better Stack](https://betterstack.com). The binary is called `bs`. Built for humans, scripts, and AI agents.
@@ -46,7 +46,7 @@ curl -fsSL https://raw.githubusercontent.com/sounak98/betterstack-cli/main/insta
 **Cargo:**
 
 ```sh
-cargo install bs-cli
+cargo install betterstack-cli
 ```
 
 **Self-update:**

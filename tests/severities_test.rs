@@ -5,8 +5,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::load_fixture;
 
-fn client(base: &str) -> bs_cli::adapters::http::HttpClient {
-    bs_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
+fn client(base: &str) -> betterstack_cli::adapters::http::HttpClient {
+    betterstack_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
 }
 
 #[tokio::test]
@@ -72,7 +72,7 @@ async fn create_severity_sends_request() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::CreateSeverityRequest {
+    let req = betterstack_cli::types::CreateSeverityRequest {
         name: "SEV1 - Critical".to_string(),
         email: true,
         sms: true,
@@ -96,7 +96,7 @@ async fn update_severity_sends_patch() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::UpdateSeverityRequest {
+    let req = betterstack_cli::types::UpdateSeverityRequest {
         name: Some("Updated Severity".to_string()),
         email: Some(true),
         sms: Some(false),

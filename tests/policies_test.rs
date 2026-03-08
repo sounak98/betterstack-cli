@@ -5,8 +5,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::load_fixture;
 
-fn client(base: &str) -> bs_cli::adapters::http::HttpClient {
-    bs_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
+fn client(base: &str) -> betterstack_cli::adapters::http::HttpClient {
+    betterstack_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
 }
 
 #[tokio::test]
@@ -83,7 +83,7 @@ async fn create_policy_sends_request() {
         .mount(&mock)
         .await;
 
-    let step = bs_cli::types::PolicyStep {
+    let step = betterstack_cli::types::PolicyStep {
         step_type: Some("escalation".to_string()),
         wait_before: Some(0),
         urgency_id: Some(1),
@@ -95,7 +95,7 @@ async fn create_policy_sends_request() {
         policy_id: None,
         policy_metadata_key: None,
     };
-    let req = bs_cli::types::CreatePolicyRequest {
+    let req = betterstack_cli::types::CreatePolicyRequest {
         name: "P1 - Production Outage".to_string(),
         steps: vec![step],
         repeat_count: Some(3),
@@ -117,7 +117,7 @@ async fn update_policy_sends_patch() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::UpdatePolicyRequest {
+    let req = betterstack_cli::types::UpdatePolicyRequest {
         name: Some("Updated Policy".to_string()),
         steps: None,
         repeat_count: Some(5),
