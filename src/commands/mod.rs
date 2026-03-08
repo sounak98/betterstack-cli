@@ -9,6 +9,7 @@ pub mod oncall;
 pub mod policies;
 pub mod severities;
 pub mod sources;
+pub mod status;
 pub mod status_pages;
 pub mod upgrade;
 
@@ -23,6 +24,7 @@ pub use oncall::OnCallCmd;
 pub use policies::PoliciesCmd;
 pub use severities::SeveritiesCmd;
 pub use sources::SourcesCmd;
+pub use status::StatusCmd;
 pub use status_pages::StatusPagesCmd;
 
 use std::io::{self, BufRead, Write};
