@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/sounak98/betterstack-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/sounak98/betterstack-cli/actions/workflows/ci.yml)
 [![Release](https://github.com/sounak98/betterstack-cli/actions/workflows/release.yml/badge.svg)](https://github.com/sounak98/betterstack-cli/releases)
+[![crates.io](https://img.shields.io/crates/v/bs-cli.svg)](https://crates.io/crates/bs-cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Fast, AI-friendly CLI for [Better Stack](https://betterstack.com). The binary is called `bs`. Built for humans, scripts, and AI agents.
@@ -42,10 +43,10 @@ MCP servers are isolated. They can't pipe into each other.
 curl -fsSL https://raw.githubusercontent.com/sounak98/betterstack-cli/main/install.sh | sh
 ```
 
-**From source:**
+**Cargo:**
 
 ```sh
-cargo install --git https://github.com/sounak98/betterstack-cli
+cargo install bs-cli
 ```
 
 **Self-update:**
