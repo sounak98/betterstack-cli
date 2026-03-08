@@ -42,13 +42,7 @@ MCP servers are isolated. They can't pipe into each other.
 curl -fsSL https://raw.githubusercontent.com/sounak98/betterstack-cli/main/install.sh | sh
 ```
 
-**Cargo (crates.io):**
-
-```sh
-cargo install bs-cli
-```
-
-**From source (latest):**
+**From source:**
 
 ```sh
 cargo install --git https://github.com/sounak98/betterstack-cli
