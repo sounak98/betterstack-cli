@@ -1,5 +1,5 @@
-use bs_cli::context::OutputFormat;
-use bs_cli::output::{self, CommandOutput};
+use betterstack_cli::context::OutputFormat;
+use betterstack_cli::output::{self, CommandOutput};
 
 #[test]
 fn table_renders_monitors() {

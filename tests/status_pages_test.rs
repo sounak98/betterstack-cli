@@ -5,8 +5,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::load_fixture;
 
-fn client(base: &str) -> bs_cli::adapters::http::HttpClient {
-    bs_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
+fn client(base: &str) -> betterstack_cli::adapters::http::HttpClient {
+    betterstack_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
 }
 
 // --- Status Pages ---
@@ -75,7 +75,7 @@ async fn create_status_page_sends_request() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::CreateStatusPageRequest {
+    let req = betterstack_cli::types::CreateStatusPageRequest {
         company_name: "Acme Corp".to_string(),
         subdomain: "acme".to_string(),
         company_url: Some("https://acme.com".to_string()),

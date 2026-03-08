@@ -5,8 +5,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::load_fixture;
 
-fn client(base: &str) -> bs_cli::adapters::http::HttpClient {
-    bs_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
+fn client(base: &str) -> betterstack_cli::adapters::http::HttpClient {
+    betterstack_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
 }
 
 #[tokio::test]
@@ -105,7 +105,7 @@ async fn create_oncall_returns_resource() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::CreateOnCallRequest {
+    let req = betterstack_cli::types::CreateOnCallRequest {
         name: "Weekend On-Call".to_string(),
     };
     let cal = client(&mock.uri()).create_oncall(&req).await.unwrap();
@@ -138,7 +138,7 @@ async fn create_oncall_event_succeeds() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::CreateOnCallEventRequest {
+    let req = betterstack_cli::types::CreateOnCallEventRequest {
         starts_at: "2026-03-10T09:00:00Z".to_string(),
         ends_at: "2026-03-10T17:00:00Z".to_string(),
         users: vec!["alice@example.com".to_string()],

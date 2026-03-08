@@ -5,8 +5,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::load_fixture;
 
-fn client(base: &str) -> bs_cli::adapters::http::HttpClient {
-    bs_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
+fn client(base: &str) -> betterstack_cli::adapters::http::HttpClient {
+    betterstack_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
 }
 
 #[tokio::test]
@@ -68,7 +68,7 @@ async fn create_heartbeat_group_sends_request() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::CreateHeartbeatGroupRequest {
+    let req = betterstack_cli::types::CreateHeartbeatGroupRequest {
         name: "Background Jobs".to_string(),
         paused: None,
         sort_index: None,

@@ -16,11 +16,11 @@ async fn list_monitors_returns_data() {
         .mount(&mock_server)
         .await;
 
-    let client = bs_cli::adapters::http::HttpClient::new(
+    let client = betterstack_cli::adapters::http::HttpClient::new(
         &format!("{}/api/v2", mock_server.uri()),
         "test-token",
     );
-    let filters = bs_cli::types::MonitorFilters::default();
+    let filters = betterstack_cli::types::MonitorFilters::default();
 
     let monitors = client.list_monitors(&filters).await.unwrap();
 
@@ -46,7 +46,7 @@ async fn get_monitor_returns_single() {
         .mount(&mock_server)
         .await;
 
-    let client = bs_cli::adapters::http::HttpClient::new(
+    let client = betterstack_cli::adapters::http::HttpClient::new(
         &format!("{}/api/v2", mock_server.uri()),
         "test-token",
     );
@@ -121,11 +121,11 @@ async fn list_monitors_handles_pagination() {
         .mount(&mock_server)
         .await;
 
-    let client = bs_cli::adapters::http::HttpClient::new(
+    let client = betterstack_cli::adapters::http::HttpClient::new(
         &format!("{}/api/v2", mock_server.uri()),
         "test-token",
     );
-    let filters = bs_cli::types::MonitorFilters::default();
+    let filters = betterstack_cli::types::MonitorFilters::default();
 
     let monitors = client.list_monitors(&filters).await.unwrap();
 
@@ -144,7 +144,7 @@ async fn api_error_returns_descriptive_message() {
         .mount(&mock_server)
         .await;
 
-    let client = bs_cli::adapters::http::HttpClient::new(
+    let client = betterstack_cli::adapters::http::HttpClient::new(
         &format!("{}/api/v2", mock_server.uri()),
         "test-token",
     );

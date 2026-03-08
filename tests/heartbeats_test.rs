@@ -5,8 +5,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use common::load_fixture;
 
-fn client(base: &str) -> bs_cli::adapters::http::HttpClient {
-    bs_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
+fn client(base: &str) -> betterstack_cli::adapters::http::HttpClient {
+    betterstack_cli::adapters::http::HttpClient::new(&format!("{base}/api/v2"), "test-token")
 }
 
 #[tokio::test]
@@ -72,7 +72,7 @@ async fn create_heartbeat_sends_correct_body() {
         .mount(&mock)
         .await;
 
-    let req = bs_cli::types::CreateHeartbeatRequest {
+    let req = betterstack_cli::types::CreateHeartbeatRequest {
         name: "Deploy Check".to_string(),
         period: 600,
         grace: Some(120),
