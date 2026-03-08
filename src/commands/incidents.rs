@@ -1,8 +1,10 @@
 use anyhow::Result;
 
 use crate::context::AppContext;
+use crate::context::OutputFormat;
 use crate::output::CommandOutput;
 use crate::output::color;
+use crate::output::fmt;
 use crate::types::{
     CommentResource, CreateCommentRequest, CreateIncidentRequest, EscalateIncidentRequest,
     IncidentFilters, IncidentResource, TimelineEvent,
@@ -218,11 +220,15 @@ impl IncidentsCmd {
             }
             IncidentsSubCmd::Get { id } => {
                 let incident = ctx.uptime.get_incident(id).await?;
-                let timeline = ctx.uptime.incident_timeline(id).await?;
-                let comments = ctx.uptime.list_comments(id).await.unwrap_or_default();
-                Ok(incident_detail_with_timeline(
-                    &incident, &timeline, &comments,
-                ))
+                if ctx.global.output_format == OutputFormat::Table {
+                    let timeline = ctx.uptime.incident_timeline(id).await?;
+                    let comments = ctx.uptime.list_comments(id).await.unwrap_or_default();
+                    Ok(incident_detail_with_timeline(
+                        &incident, &timeline, &comments,
+                    ))
+                } else {
+                    Ok(incident_to_detail(&incident))
+                }
             }
             IncidentsSubCmd::Create {
                 name,
@@ -352,12 +358,20 @@ impl IncidentsCmd {
             }
             IncidentsSubCmd::Timeline { id } => {
                 let events = ctx.uptime.incident_timeline(id).await?;
-                Ok(CommandOutput::Raw(render_timeline(&events)))
+                if ctx.global.output_format == OutputFormat::Table {
+                    Ok(CommandOutput::Raw(render_timeline(&events)))
+                } else {
+                    Ok(timeline_to_table(&events))
+                }
             }
             IncidentsSubCmd::Comments(sub) => match sub {
                 CommentsSubCmd::List { incident_id } => {
                     let comments = ctx.uptime.list_comments(incident_id).await?;
-                    Ok(CommandOutput::Raw(render_comments(&comments)))
+                    if ctx.global.output_format == OutputFormat::Table {
+                        Ok(CommandOutput::Raw(render_comments(&comments)))
+                    } else {
+                        Ok(comments_to_table(&comments))
+                    }
                 }
                 CommentsSubCmd::Add {
                     incident_id,
@@ -663,12 +677,7 @@ fn s(opt: &Option<String>) -> String {
 
 fn fmt_time(t: Option<&str>) -> String {
     match t {
-        Some(ts) => ts
-            .split('T')
-            .nth(1)
-            .and_then(|t| t.strip_suffix('Z'))
-            .map(|t| t.to_string())
-            .unwrap_or_else(|| ts.to_string()),
+        Some(ts) => fmt::relative_time(ts),
         None => "-".to_string(),
     }
 }
@@ -682,4 +691,53 @@ fn resolve_by(flag: &Option<String>, ctx: &AppContext) -> Result<String> {
         return Ok(email.clone());
     }
     anyhow::bail!("No --by provided and no email configured. Run `bs auth init` to set your email.")
+}
+
+fn timeline_to_table(events: &[TimelineEvent]) -> CommandOutput {
+    let headers = vec!["At".to_string(), "Type".to_string(), "Content".to_string()];
+    let rows = events
+        .iter()
+        .map(|e| {
+            let a = &e.attributes;
+            let content = a
+                .data
+                .as_ref()
+                .and_then(|d| match &d.content {
+                    Some(serde_json::Value::String(s)) => Some(s.clone()),
+                    Some(serde_json::Value::Object(obj)) => {
+                        obj.get("text").and_then(|t| t.as_str()).map(String::from)
+                    }
+                    _ => None,
+                })
+                .unwrap_or_else(|| "-".to_string());
+            vec![
+                a.at.clone().unwrap_or_else(|| "-".to_string()),
+                a.item_type.clone().unwrap_or_else(|| "-".to_string()),
+                content,
+            ]
+        })
+        .collect();
+    CommandOutput::Table { headers, rows }
+}
+
+fn comments_to_table(comments: &[CommentResource]) -> CommandOutput {
+    let headers = vec![
+        "ID".to_string(),
+        "Author".to_string(),
+        "Content".to_string(),
+        "Created At".to_string(),
+    ];
+    let rows = comments
+        .iter()
+        .map(|c| {
+            let a = &c.attributes;
+            vec![
+                c.id.clone(),
+                a.user_email.clone().unwrap_or_else(|| "-".to_string()),
+                a.content.clone().unwrap_or_else(|| "-".to_string()),
+                a.created_at.clone().unwrap_or_else(|| "-".to_string()),
+            ]
+        })
+        .collect();
+    CommandOutput::Table { headers, rows }
 }

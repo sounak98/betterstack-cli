@@ -6,7 +6,7 @@ use betterstack_cli::adapters::config::FileConfigStore;
 use betterstack_cli::adapters::http::HttpClient;
 use betterstack_cli::commands::{
     AuthCmd, HeartbeatGroupsCmd, HeartbeatsCmd, IncidentsCmd, LogsCmd, MonitorGroupsCmd,
-    MonitorsCmd, OnCallCmd, PoliciesCmd, SeveritiesCmd, SourcesCmd, StatusPagesCmd,
+    MonitorsCmd, OnCallCmd, PoliciesCmd, SeveritiesCmd, SourcesCmd, StatusCmd, StatusPagesCmd,
 };
 use betterstack_cli::context::{AppContext, GlobalOptions, OutputFormat};
 use betterstack_cli::output;
@@ -63,6 +63,8 @@ enum Command {
     Severities(SeveritiesCmd),
     /// Manage log sources.
     Sources(SourcesCmd),
+    /// Quick overview of monitors, heartbeats, and active incidents.
+    Status(StatusCmd),
     /// Manage status pages, sections, resources, and reports.
     StatusPages(StatusPagesCmd),
     /// Update bs to the latest version.
@@ -165,6 +167,7 @@ async fn main() -> Result<()> {
         Command::Policies(cmd) => cmd.run(&ctx).await,
         Command::Severities(cmd) => cmd.run(&ctx).await,
         Command::Sources(cmd) => cmd.run(&ctx).await,
+        Command::Status(cmd) => cmd.run(&ctx).await,
         Command::StatusPages(cmd) => cmd.run(&ctx).await,
         Command::Upgrade => betterstack_cli::commands::upgrade::run().await,
         Command::Completions { .. } => unreachable!(),

@@ -1,5 +1,6 @@
 pub mod color;
 pub mod csv;
+pub mod fmt;
 pub mod json;
 pub mod table;
 

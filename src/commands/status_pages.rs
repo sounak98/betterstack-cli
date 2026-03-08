@@ -1,8 +1,9 @@
 use anyhow::Result;
 
-use crate::context::AppContext;
+use crate::context::{AppContext, OutputFormat};
 use crate::output::CommandOutput;
 use crate::output::color;
+use crate::output::fmt;
 use crate::types::*;
 
 #[derive(clap::Args)]
@@ -346,13 +347,19 @@ impl StatusPagesCmd {
             }
             StatusPagesSubCmd::Get { id } => {
                 let page = ctx.uptime.get_status_page(id).await?;
-                let sections = ctx.uptime.list_status_page_sections(id).await.ok();
-                let resources = ctx.uptime.list_status_page_resources(id).await.ok();
-                Ok(page_detail_rich(
-                    &page,
-                    sections.as_deref(),
-                    resources.as_deref(),
-                ))
+                if ctx.global.output_format == OutputFormat::Table {
+                    let sections = ctx.uptime.list_status_page_sections(id).await.ok();
+                    let resources = ctx.uptime.list_status_page_resources(id).await.ok();
+                    Ok(page_detail_rich(
+                        &page,
+                        sections.as_deref(),
+                        resources.as_deref(),
+                    ))
+                } else {
+                    Ok(CommandOutput::Detail {
+                        fields: build_page_fields(&page),
+                    })
+                }
             }
             StatusPagesSubCmd::Create {
                 name,
@@ -552,12 +559,18 @@ async fn run_reports(ctx: &AppContext, cmd: &ReportsCmd) -> Result<CommandOutput
         }
         ReportsSubCmd::Get { page_id, report_id } => {
             let r = ctx.uptime.get_status_report(page_id, report_id).await?;
-            let updates = ctx
-                .uptime
-                .list_status_updates(page_id, report_id)
-                .await
-                .ok();
-            Ok(report_detail_rich(&r, updates.as_deref()))
+            if ctx.global.output_format == OutputFormat::Table {
+                let updates = ctx
+                    .uptime
+                    .list_status_updates(page_id, report_id)
+                    .await
+                    .ok();
+                Ok(report_detail_rich(&r, updates.as_deref()))
+            } else {
+                Ok(CommandOutput::Detail {
+                    fields: build_report_fields(&r),
+                })
+            }
         }
         ReportsSubCmd::Create {
             page_id,
@@ -712,7 +725,10 @@ fn build_page_fields(p: &StatusPageResource) -> Vec<(String, String)> {
         ),
         (
             "Created".to_string(),
-            a.created_at.clone().unwrap_or_else(|| "-".to_string()),
+            a.created_at
+                .as_deref()
+                .map(fmt::relative_time)
+                .unwrap_or_else(|| "-".to_string()),
         ),
     ]
 }
@@ -897,8 +913,14 @@ fn reports_to_table(reports: Vec<StatusReportResource>) -> CommandOutput {
                 a.title.clone().unwrap_or_else(|| "-".to_string()),
                 a.report_type.clone().unwrap_or_else(|| "-".to_string()),
                 a.aggregate_state.clone().unwrap_or_else(|| "-".to_string()),
-                a.starts_at.clone().unwrap_or_else(|| "-".to_string()),
-                a.ends_at.clone().unwrap_or_else(|| "-".to_string()),
+                a.starts_at
+                    .as_deref()
+                    .map(fmt::relative_time)
+                    .unwrap_or_else(|| "-".to_string()),
+                a.ends_at
+                    .as_deref()
+                    .map(fmt::relative_time)
+                    .unwrap_or_else(|| "-".to_string()),
             ]
         })
         .collect();
@@ -921,11 +943,17 @@ fn build_report_fields(r: &StatusReportResource) -> Vec<(String, String)> {
         ("Status".to_string(), color::status(status_raw)),
         (
             "Starts At".to_string(),
-            a.starts_at.clone().unwrap_or_else(|| "-".to_string()),
+            a.starts_at
+                .as_deref()
+                .map(fmt::relative_time)
+                .unwrap_or_else(|| "-".to_string()),
         ),
         (
             "Ends At".to_string(),
-            a.ends_at.clone().unwrap_or_else(|| "-".to_string()),
+            a.ends_at
+                .as_deref()
+                .map(fmt::relative_time)
+                .unwrap_or_else(|| "-".to_string()),
         ),
     ];
     if let Some(resources) = &a.affected_resources {
@@ -970,7 +998,11 @@ fn report_detail_rich(
         out.push_str(&format!("{}\n", color::bold("Updates")));
         for (idx, u) in updates.iter().enumerate() {
             let ua = &u.attributes;
-            let time = ua.published_at.as_deref().unwrap_or("-");
+            let time = ua
+                .published_at
+                .as_deref()
+                .map(fmt::relative_time)
+                .unwrap_or_else(|| "-".to_string());
             let msg = ua.message.as_deref().unwrap_or("-");
             let notified = ua
                 .notify_subscribers
@@ -981,7 +1013,7 @@ fn report_detail_rich(
                 "  {} {}  {}{}\n",
                 color::cyan("●"),
                 msg,
-                color::dim(time),
+                color::dim(&time),
                 color::dim(notified),
             ));
             if idx < updates.len() - 1 {
@@ -1007,7 +1039,10 @@ fn updates_to_table(updates: Vec<StatusUpdateResource>) -> CommandOutput {
             vec![
                 u.id.clone(),
                 a.message.clone().unwrap_or_else(|| "-".to_string()),
-                a.published_at.clone().unwrap_or_else(|| "-".to_string()),
+                a.published_at
+                    .as_deref()
+                    .map(fmt::relative_time)
+                    .unwrap_or_else(|| "-".to_string()),
                 a.notify_subscribers
                     .map(|v| if v { "yes" } else { "no" })
                     .unwrap_or("-")

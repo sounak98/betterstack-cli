@@ -2,6 +2,7 @@ use anyhow::Result;
 
 use crate::context::AppContext;
 use crate::output::CommandOutput;
+use crate::output::fmt;
 use crate::types::{
     CreateHeartbeatRequest, HeartbeatFilters, HeartbeatResource, UpdateHeartbeatRequest,
 };
@@ -294,10 +295,10 @@ fn heartbeats_to_table(heartbeats: Vec<HeartbeatResource>) -> CommandOutput {
                 h.id.clone(),
                 a.name.clone().unwrap_or_else(|| "-".to_string()),
                 a.period
-                    .map(format_seconds)
+                    .map(fmt::duration)
                     .unwrap_or_else(|| "-".to_string()),
                 a.grace
-                    .map(format_seconds)
+                    .map(fmt::duration)
                     .unwrap_or_else(|| "-".to_string()),
                 a.status.clone().unwrap_or_else(|| "-".to_string()),
                 a.url.clone().unwrap_or_else(|| "-".to_string()),
@@ -326,13 +327,13 @@ fn heartbeat_to_detail(h: &HeartbeatResource) -> CommandOutput {
         (
             "Period".to_string(),
             a.period
-                .map(format_seconds)
+                .map(fmt::duration)
                 .unwrap_or_else(|| "-".to_string()),
         ),
         (
             "Grace".to_string(),
             a.grace
-                .map(format_seconds)
+                .map(fmt::duration)
                 .unwrap_or_else(|| "-".to_string()),
         ),
         (
@@ -365,7 +366,10 @@ fn heartbeat_to_detail(h: &HeartbeatResource) -> CommandOutput {
         ),
         (
             "Created".to_string(),
-            a.created_at.clone().unwrap_or_else(|| "-".to_string()),
+            a.created_at
+                .as_deref()
+                .map(fmt::relative_time)
+                .unwrap_or_else(|| "-".to_string()),
         ),
     ];
     CommandOutput::Detail { fields }
@@ -384,7 +388,7 @@ fn sla_to_detail(sla: &crate::types::SlaResource) -> CommandOutput {
         (
             "Total Downtime".to_string(),
             a.total_downtime
-                .map(|v| format_seconds(v as u64))
+                .map(|v| fmt::duration(v as u64))
                 .unwrap_or_else(|| "-".to_string()),
         ),
         (
@@ -396,29 +400,17 @@ fn sla_to_detail(sla: &crate::types::SlaResource) -> CommandOutput {
         (
             "Longest Incident".to_string(),
             a.longest_incident
-                .map(|v| format_seconds(v as u64))
+                .map(|v| fmt::duration(v as u64))
                 .unwrap_or_else(|| "-".to_string()),
         ),
         (
             "Avg Incident".to_string(),
             a.average_incident
-                .map(|v| format_seconds(v as u64))
+                .map(|v| fmt::duration(v as u64))
                 .unwrap_or_else(|| "-".to_string()),
         ),
     ];
     CommandOutput::Detail { fields }
-}
-
-fn format_seconds(s: u64) -> String {
-    if s < 60 {
-        format!("{s}s")
-    } else if s < 3600 {
-        format!("{}m", s / 60)
-    } else if s < 86400 {
-        format!("{}h", s / 3600)
-    } else {
-        format!("{}d", s / 86400)
-    }
 }
 
 fn default_update() -> UpdateHeartbeatRequest {
